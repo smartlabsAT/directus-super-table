@@ -1,0 +1,40 @@
+{
+  "name": "directus-extension-layout-super-table",
+  "version": "1.0.0",
+  "type": "module",
+  "directus:extension": {
+    "type": "layout",
+    "path": "index.js",
+    "source": "index.ts",
+    "host": "^11.0.0"
+  },
+  "scripts": {
+    "build": "directus-extension build",
+    "dev": "directus-extension build -w --no-minify",
+    "dev:browser": "node playwright-tools/playwright-dev.js",
+    "watch": "node playwright-tools/watch-dev.js",
+    "test": "node playwright-tools/test-extension.js",
+    "inspect": "node playwright-tools/inspect-vertical-alignment.js",
+    "console": "node playwright-tools/playwright-console-monitor.js",
+    "analyze": "node playwright-tools/playwright-assistant.js --report",
+    "debug": "node playwright-tools/playwright-assistant.js",
+    "ai": "node playwright-tools/ai-helper.js",
+    "ai:diagnose": "node playwright-tools/ai-helper.js diagnose",
+    "ai:package": "node playwright-tools/ai-helper.js package",
+    "ai:quick": "node playwright-tools/ai-helper.js quick"
+  },
+  "dependencies": {
+    "@directus/format-title": "^12.0.1",
+    "lodash": "^4.17.21"
+  },
+  "devDependencies": {
+    "@directus/extensions-sdk": "^11.0.0",
+    "@directus/types": "^11.0.0",
+    "@playwright/test": "^1.54.2",
+    "@types/lodash": "^4.14.202",
+    "chalk": "^5.5.0",
+    "playwright": "^1.54.2",
+    "typescript": "^5.0.0",
+    "vue": "^3.3.0"
+  }
+}
