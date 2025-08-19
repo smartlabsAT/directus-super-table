@@ -323,9 +323,9 @@ import {
   useApi,
 } from '@directus/extensions-sdk';
 import { formatTitle } from '@directus/format-title';
-import { getDefaultDisplayForType } from './core-clones/utils/get-default-display-for-type';
-import { adjustFieldsForDisplays } from './core-clones/utils/adjust-fields-for-displays';
-import { useAliasFields } from './core-clones/composables/use-alias-fields';
+import { getDefaultDisplayForType } from './utils/getDefaultDisplayForType';
+import { adjustFieldsForDisplays } from './utils/adjustFieldsForDisplays';
+import { useAliasFields } from './composables/useAliasFields';
 import { useLanguageSelector } from './composables/useLanguageSelector';
 import { useTableSort } from './composables/useTableSort';
 import { useTableEdits } from './composables/useTableEdits';
