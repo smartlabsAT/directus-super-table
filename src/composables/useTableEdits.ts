@@ -1,7 +1,7 @@
 import { ref, computed, Ref } from 'vue';
-import { useApi } from '@directus/extensions-sdk';
 import type { Field } from '@directus/types';
 import type { Edits, TranslationUpdate } from '../types/table.types';
+import { useTableApi } from './api';
 
 export function useTableEdits(
   collection: Ref<string>,
@@ -9,7 +9,7 @@ export function useTableEdits(
   items: Ref<any[]>,
   getItems: () => Promise<void>
 ) {
-  const api = useApi();
+  const tableApi = useTableApi();
   const edits = ref<Edits>({});
   const hasEdits = computed(() => Object.keys(edits.value).length > 0);
   const savingCells = ref<Record<string, boolean>>({});
@@ -86,7 +86,20 @@ export function useTableEdits(
         }
       }
       
-      await api.patch(`/items/${collection.value}/${itemId}`, updatePayload);
+      // Use tableApi to update the item
+      for (const [field, value] of Object.entries(updatePayload)) {
+        if (field === 'translations') {
+          // For full translations update
+          await tableApi.updateItem(
+            collection.value,
+            itemId,
+            'translations',
+            { isFullTranslations: true, translations: value }
+          );
+        } else {
+          await tableApi.updateItem(collection.value, itemId, field, value);
+        }
+      }
       
       // Clear edits for this item
       delete edits.value[itemId];

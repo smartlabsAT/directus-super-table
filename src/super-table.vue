@@ -303,7 +303,6 @@ import { useRouter } from 'vue-router';
 import { debounce } from 'lodash';
 import {
   useStores,
-  useItems,
   useCollection,
   useSync,
   useApi,
@@ -311,6 +310,7 @@ import {
 import { formatTitle } from '@directus/format-title';
 import { getDefaultDisplayForType } from './utils/getDefaultDisplayForType';
 import { adjustFieldsForDisplays } from './utils/adjustFieldsForDisplays';
+import { useTableApi } from './composables/api';
 import { useAliasFields } from './composables/useAliasFields';
 import { useLanguageSelector } from './composables/useLanguageSelector';
 import { useTableSort } from './composables/useTableSort';
@@ -860,6 +860,9 @@ onMounted(() => {
   // Load presets from layoutOptions (no localStorage needed)
   loadPresets();
   
+  // Load initial items
+  getItems();
+  
   // Listen for save events from actions
   window.addEventListener('quick-filter-saved', handleQuickFilterSaved);
 });
@@ -893,32 +896,47 @@ const combinedFilter = computed(() => {
 });
 
 // Items & Loading with proper fields and alias handling
-const {
-  items,
-  loading,
-  error,
-  totalPages,
-  itemCount,
-  totalCount,
-  changeManualSort: originalChangeManualSort,
-  getItems,
-} = useItems(collection, {
-  sort,
-  limit,
-  page,
-  fields: fieldsWithRelational,
-  alias: aliasQuery,
-  filter: combinedFilter, // Use combined filter instead of separate filter and search
-  deep: deep,
+// Data fetching with new API
+const tableApi = useTableApi();
+const loading = tableApi.loading;
+const error = tableApi.error;
+const items = tableApi.items;
+const totalCount = tableApi.totalCount;
+const itemCount = tableApi.filterCount;
+
+// Calculate totalPages
+const totalPages = computed(() => {
+  if (!itemCount.value || !limit.value) return 1;
+  return Math.ceil(itemCount.value / limit.value);
 });
 
-// Use the original changeManualSort directly
-const changeManualSort = originalChangeManualSort;
+// Fetch items function
+async function getItems() {
+  try {
+    await tableApi.fetchItems({
+      collection: collection.value,
+      fields: fieldsWithRelational.value,
+      filter: combinedFilter.value,
+      sort: sort.value,
+      page: page.value,
+      limit: limit.value,
+      deep: deep.value,
+      alias: aliasQuery.value
+    });
+  } catch (err) {
+    console.error('Failed to fetch items:', err);
+  }
+}
 
 // Create a wrapper function for getItems
 async function refreshItems() {
   await getItems();
 }
+
+// Manual sort is not supported with the new API approach
+const changeManualSort = () => {
+  console.warn('Manual sort not implemented with tableApi');
+};
 
 // Watch for refresh prop calls
 watch(() => props.refresh, (newVal) => {
@@ -926,6 +944,11 @@ watch(() => props.refresh, (newVal) => {
     refreshItems();
   }
 });
+
+// Watch for query parameter changes
+watch([combinedFilter, sort, page, limit, fieldsWithRelational], () => {
+  getItems();
+}, { deep: true });
 
 watch(() => props.resetPresetAndRefresh, (newVal) => {
   if (newVal) {

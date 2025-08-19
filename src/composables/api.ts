@@ -11,6 +11,7 @@ export interface ApiOptions {
   page?: number;
   limit?: number;
   deep?: Record<string, any>;
+  alias?: Record<string, string>;
 }
 
 export interface ApiResponse {
@@ -63,6 +64,11 @@ export function useTableApi() {
       // Add deep parameters for relations
       if (options.deep) {
         params.deep = options.deep;
+      }
+
+      // Add alias parameters
+      if (options.alias) {
+        params.alias = options.alias;
       }
 
       // Make API request
@@ -239,6 +245,240 @@ export function useTableApi() {
     }
   }
 
+  /**
+   * Save a filter preset
+   */
+  async function savePreset(preset: any): Promise<any> {
+    try {
+      const response = await api.post('/presets', preset);
+      return response.data?.data;
+    } catch (err) {
+      error.value = err as Error;
+      throw err;
+    }
+  }
+
+  /**
+   * Fetch available languages
+   */
+  async function fetchLanguages(): Promise<any[]> {
+    try {
+      const response = await api.get('/items/languages', {
+        params: {
+          fields: ['code', 'name'],
+          limit: -1,
+          sort: ['name']
+        }
+      });
+      return response.data?.data || [];
+    } catch (err) {
+      error.value = err as Error;
+      throw err;
+    }
+  }
+
+  /**
+   * Fetch file details
+   */
+  async function fetchFile(fileId: string): Promise<any> {
+    try {
+      const response = await api.get(`/files/${fileId}`, {
+        params: {
+          fields: ['id', 'title', 'filename_download', 'type', 'filesize', 'width', 'height', 'created_on', 'modified_on']
+        }
+      });
+      return response.data?.data;
+    } catch (err) {
+      // Try alternative endpoint
+      try {
+        const response = await api.get(`/items/directus_files/${fileId}`, {
+          params: {
+            fields: ['id', 'title', 'filename_download', 'type', 'filesize', 'width', 'height', 'created_on', 'modified_on']
+          }
+        });
+        return response.data?.data;
+      } catch (err2) {
+        error.value = err2 as Error;
+        throw err2;
+      }
+    }
+  }
+
+  /**
+   * Fetch files list
+   */
+  async function fetchFiles(options: {
+    folder?: string | null;
+    search?: string;
+    limit?: number;
+    page?: number;
+  }): Promise<{ files: any[], folders: any[] }> {
+    try {
+      const params: any = {
+        fields: ['id', 'title', 'filename_download', 'type', 'folder', 'modified_on', 'filesize'],
+        limit: options.limit || 50,
+        page: options.page || 1,
+        sort: ['-uploaded_on']
+      };
+
+      if (options.folder !== undefined) {
+        params.filter = { folder: { _eq: options.folder } };
+      }
+
+      if (options.search) {
+        params.search = options.search;
+      }
+
+      let filesResponse;
+      try {
+        filesResponse = await api.get('/files', { params });
+      } catch {
+        filesResponse = await api.get('/items/directus_files', { params });
+      }
+
+      // Also fetch folders for the current level
+      const folderParams: any = {
+        fields: ['id', 'name', 'parent'],
+        limit: -1,
+        sort: ['name']
+      };
+
+      if (options.folder !== undefined) {
+        folderParams.filter = { parent: { _eq: options.folder } };
+      }
+
+      let foldersResponse;
+      try {
+        foldersResponse = await api.get('/folders', { params: folderParams });
+      } catch {
+        foldersResponse = await api.get('/items/directus_folders', { params: folderParams });
+      }
+
+      return {
+        files: filesResponse.data?.data || [],
+        folders: foldersResponse.data?.data || []
+      };
+    } catch (err) {
+      error.value = err as Error;
+      throw err;
+    }
+  }
+
+  /**
+   * Fetch folder details and breadcrumb
+   */
+  async function fetchFolder(folderId: string | null): Promise<{ folder: any, breadcrumb: any[] }> {
+    try {
+      if (!folderId) {
+        return { folder: null, breadcrumb: [] };
+      }
+
+      let response;
+      try {
+        response = await api.get(`/folders/${folderId}`);
+      } catch {
+        response = await api.get(`/items/directus_folders/${folderId}`);
+      }
+
+      const folder = response.data?.data;
+      const breadcrumb = [];
+      
+      if (folder) {
+        let current = folder;
+        breadcrumb.unshift(current);
+        
+        while (current.parent) {
+          try {
+            const parentResponse = await api.get(`/folders/${current.parent}`);
+            current = parentResponse.data?.data;
+          } catch {
+            const parentResponse = await api.get(`/items/directus_folders/${current.parent}`);
+            current = parentResponse.data?.data;
+          }
+          if (current) {
+            breadcrumb.unshift(current);
+          } else {
+            break;
+          }
+        }
+      }
+
+      return { folder, breadcrumb };
+    } catch (err) {
+      error.value = err as Error;
+      throw err;
+    }
+  }
+
+  /**
+   * Duplicate item with translations (deep copy)
+   */
+  async function duplicateItemWithTranslations(
+    collection: string,
+    primaryKey: string | number,
+    primaryKeyField: string = 'id',
+    includeTranslations: boolean = true
+  ): Promise<Item> {
+    try {
+      // Get the original item with translations
+      const params: any = {
+        fields: ['*']
+      };
+
+      if (includeTranslations) {
+        params.fields.push('translations.*');
+      }
+
+      const response = await api.get(`/items/${collection}/${primaryKey}`, { params });
+      const originalItem = response.data?.data;
+
+      if (!originalItem) {
+        throw new Error('Item not found');
+      }
+
+      // Remove primary key and system fields
+      const mainItemData = { ...originalItem };
+      delete mainItemData[primaryKeyField];
+      delete mainItemData.date_created;
+      delete mainItemData.date_updated;
+      delete mainItemData.user_created;
+      delete mainItemData.user_updated;
+
+      // Store translations separately and remove from main item
+      const translations = mainItemData.translations;
+      delete mainItemData.translations;
+
+      // Create the main item
+      const newItemResponse = await api.post(`/items/${collection}`, mainItemData);
+      const newItemId = newItemResponse.data?.data?.[primaryKeyField];
+
+      // Duplicate translations if they exist and includeTranslations is true
+      if (includeTranslations && translations && translations.length > 0 && newItemId) {
+        for (const translation of translations) {
+          const translationData = { ...translation };
+          
+          // Remove translation ID and set new parent reference
+          delete translationData.id;
+          
+          // Determine the parent field name
+          const parentFieldName = `${collection.replace('content_', '')}_id`;
+          translationData[parentFieldName] = newItemId;
+
+          try {
+            await api.post(`/items/${collection}_translations`, translationData);
+          } catch (err) {
+            console.warn('Failed to duplicate translation:', err);
+          }
+        }
+      }
+
+      return newItemResponse.data?.data;
+    } catch (err) {
+      error.value = err as Error;
+      throw err;
+    }
+  }
+
   return {
     loading: computed(() => loading.value),
     error: computed(() => error.value),
@@ -247,8 +487,15 @@ export function useTableApi() {
     filterCount: computed(() => filterCount.value),
     fetchItems,
     updateItem,
+    updateTranslation,
     deleteItems,
     duplicateItem,
-    exportItems
+    duplicateItemWithTranslations,
+    exportItems,
+    savePreset,
+    fetchLanguages,
+    fetchFile,
+    fetchFiles,
+    fetchFolder
   };
 }

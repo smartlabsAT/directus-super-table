@@ -1,5 +1,6 @@
 import { ref, computed, Ref } from 'vue';
-import { useApi, useStores } from '@directus/extensions-sdk';
+import { useStores } from '@directus/extensions-sdk';
+import { useTableApi } from './api';
 
 export interface Language {
   code: string;
@@ -7,7 +8,7 @@ export interface Language {
 }
 
 export function useLanguageSelector() {
-  const api = useApi();
+  const tableApi = useTableApi();
   const { useUserStore } = useStores();
   const userStore = useUserStore();
   
@@ -24,16 +25,10 @@ export function useLanguageSelector() {
     
     loadingLanguages.value = true;
     try {
-      const response = await api.get('/items/languages', {
-        params: {
-          fields: ['code', 'name'],
-          sort: 'name',
-          limit: -1
-        }
-      });
+      const languageData = await tableApi.fetchLanguages();
       
-      if (response.data?.data) {
-        languages.value = response.data.data;
+      if (languageData) {
+        languages.value = languageData;
       } else {
         // Fallback to common languages if languages collection doesn't exist
         languages.value = [

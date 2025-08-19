@@ -419,7 +419,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue';
-import { useApi } from '@directus/extensions-sdk';
+import { useTableApi } from '../composables/api';
 // Note: useDrawer might not be available in all versions, we'll use alternative approach
 
 interface Props {
@@ -795,7 +795,7 @@ function handleJsonInput(value: string) {
 }
 
 // File handling methods
-const api = useApi();
+const tableApi = useTableApi();
 
 function getImageUrl(fileId: string | null): string {
 	if (!fileId) return '';
@@ -820,17 +820,10 @@ async function navigateToSelectedFile() {
 	// If there's a selected file, first find which folder it's in
 	if (localValue.value && selectedFileId.value) {
 		try {
-			// Use the api that's already defined globally
 			// Get the file details to find its folder
-			const response = await api.get(`/files/${selectedFileId.value}`, {
-				params: {
-					fields: ['id', 'folder', 'folder.id', 'folder.name', 'folder.parent', 'folder.parent.id', 'folder.parent.name']
-				}
-			});
+			const fileData = await tableApi.fetchFile(selectedFileId.value);
 			
-			console.log('File API response:', response.data);
-			
-			const fileData = response.data?.data;
+			console.log('File data:', fileData);
 			console.log('File folder data:', fileData?.folder);
 			
 			if (fileData?.folder) {
@@ -848,8 +841,8 @@ async function navigateToSelectedFile() {
 					folderId = fileData.folder;
 					// Fetch the folder details for name and parent
 					try {
-						const folderResponse = await api.get(`/folders/${folderId}`);
-						folderInfo = folderResponse.data?.data;
+						const folderData = await tableApi.fetchFolder(folderId);
+						folderInfo = folderData?.folder || { id: folderId, name: 'Folder' };
 					} catch (e) {
 						console.error('Could not fetch folder details:', e);
 						folderInfo = { id: folderId, name: 'Folder' };
@@ -915,91 +908,23 @@ async function loadFiles() {
 	console.log('Starting to load files and folders...');
 	
 	try {
-		// Build filter
-		const filter: any = {};
+		// Load files and folders using tableApi
+		const result = await tableApi.fetchFiles({
+			folder: currentFolder.value,
+			search: fileSearchQuery.value,
+			limit: 100
+		});
 		
-		// Filter by current folder
-		if (currentFolder.value) {
-			filter.folder = { _eq: currentFolder.value };
-			console.log(`Loading files from folder: ${currentFolder.value}`);
+		// Filter files for images if needed
+		if (isImageField.value && result.files) {
+			availableFiles.value = result.files.filter((file: any) => 
+				file.type && file.type.startsWith('image/')
+			);
 		} else {
-			filter.folder = { _null: true };
-			console.log('Loading files from root folder');
+			availableFiles.value = result.files || [];
 		}
 		
-		// Filter by type for images
-		if (isImageField.value) {
-			filter.type = { _starts_with: 'image/' };
-		}
-		
-		const params: any = {
-			fields: ['id', 'title', 'filename_download', 'type', 'filesize', 'modified_on', 'folder'],
-			limit: 100,
-			sort: ['-modified_on'],
-			filter
-		};
-		
-		if (fileSearchQuery.value) {
-			params.search = fileSearchQuery.value;
-		}
-		
-		console.log('Loading files with params:', JSON.stringify(params, null, 2));
-		
-		// Load files
-		let filesResponse;
-		try {
-			filesResponse = await api.get('/files', { params });
-		} catch (e1) {
-			filesResponse = await api.get('/items/directus_files', { params });
-		}
-		
-		// Load folders for current level
-		const folderParams: any = {
-			fields: ['id', 'name', 'parent'],
-			limit: 100,
-			sort: ['name'],
-			filter: {
-				parent: currentFolder.value ? { _eq: currentFolder.value } : { _null: true }
-			}
-		};
-		
-		let foldersResponse;
-		try {
-			foldersResponse = await api.get('/folders', { params: folderParams });
-		} catch (e1) {
-			try {
-				foldersResponse = await api.get('/items/directus_folders', { params: folderParams });
-			} catch (e2) {
-				console.log('Could not load folders');
-				foldersResponse = null;
-			}
-		}
-		
-		// Handle files response
-		if (filesResponse?.data) {
-			if (Array.isArray(filesResponse.data)) {
-				availableFiles.value = filesResponse.data;
-			} else if (filesResponse.data.data) {
-				availableFiles.value = filesResponse.data.data;
-			} else {
-				availableFiles.value = [];
-			}
-		} else {
-			availableFiles.value = [];
-		}
-		
-		// Handle folders response
-		if (foldersResponse?.data) {
-			if (Array.isArray(foldersResponse.data)) {
-				availableFolders.value = foldersResponse.data;
-			} else if (foldersResponse.data.data) {
-				availableFolders.value = foldersResponse.data.data;
-			} else {
-				availableFolders.value = [];
-			}
-		} else {
-			availableFolders.value = [];
-		}
+		availableFolders.value = result.folders || [];
 		
 		console.log(`Loaded ${availableFiles.value.length} files and ${availableFolders.value.length} folders`);
 		
@@ -1023,36 +948,10 @@ async function navigateToFolder(folderId: string | null) {
 		// Going to root
 		folderPath.value = [];
 	} else {
-		// Load folder info to build path
+		// Load folder info to build path using tableApi
 		try {
-			// Try different API endpoints for folders
-			let response;
-			try {
-				response = await api.get(`/folders/${folderId}`);
-			} catch (e1) {
-				response = await api.get(`/items/directus_folders/${folderId}`);
-			}
-			
-			const folder = response.data.data || response.data;
-			
-			// Build path from folder parent chain
-			const path = [];
-			let current = folder;
-			while (current) {
-				path.unshift({ id: current.id, name: current.name });
-				if (current.parent) {
-					try {
-						const parentResponse = await api.get(`/folders/${current.parent}`);
-						current = parentResponse.data.data || parentResponse.data;
-					} catch (e) {
-						const parentResponse = await api.get(`/items/directus_folders/${current.parent}`);
-						current = parentResponse.data.data || parentResponse.data;
-					}
-				} else {
-					current = null;
-				}
-			}
-			folderPath.value = path;
+			const folderData = await tableApi.fetchFolder(folderId);
+			folderPath.value = folderData.breadcrumb || [];
 		} catch (e) {
 			console.error('Failed to load folder path:', e);
 			// Still navigate even if we can't build the path

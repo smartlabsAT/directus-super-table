@@ -102,8 +102,9 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { useApi, useStores } from '@directus/extensions-sdk';
+import { useStores } from '@directus/extensions-sdk';
 import { useI18n } from 'vue-i18n';
+import { useTableApi } from './composables/api';
 
 // Props from layout state
 const props = defineProps<{
@@ -121,7 +122,7 @@ const emit = defineEmits(['update:layoutOptions']);
 
 // Composables
 const { t } = useI18n();
-const api = useApi();
+const tableApi = useTableApi();
 const { useNotificationsStore } = useStores();
 const notificationsStore = useNotificationsStore();
 
@@ -297,7 +298,7 @@ async function saveFilter() {
     
     // Also try to save to Directus presets API for backward compatibility
     try {
-      await api.post('/presets', {
+      await tableApi.savePreset({
         bookmark: filterName.value,
         collection: props.collection,
         layout: 'super-layout-table',
@@ -362,68 +363,13 @@ async function duplicateSelectedItems() {
   
   try {
     for (const itemId of props.selection) {
-      // Step 1: Get original item WITH all relations (especially translations)
-      const response = await api.get(`/items/${props.collection}/${itemId}`, {
-        params: {
-          fields: '*,translations.*' // Include translations and other O2M relations
-        }
-      });
-      const originalItem = response.data?.data || response.data;
-      
-      if (!originalItem) {
-        throw new Error(`Item ${itemId} not found`);
-      }
-      
-      // Step 2: Separate relations from main item data
-      const { 
-        [primaryKey]: id,
-        translations,
-        date_created,
-        date_updated,
-        user_created,
-        user_updated,
-        ...mainItemData 
-      } = originalItem;
-      
-      // Step 3: Create the main item WITHOUT relations first
-      const newItemResponse = await api.post(`/items/${props.collection}`, mainItemData);
-      const newItem = newItemResponse.data?.data || newItemResponse.data;
-      const newItemId = newItem[primaryKey] || newItem.id;
-      
-      // Step 4: Handle O2M translations specifically
-      if (translations && Array.isArray(translations) && translations.length > 0) {
-        // Determine the foreign key field name (usually collection_id)
-        const foreignKeyField = `${props.collection}_id`;
-        
-        // Create new translation entries for the duplicated item
-        for (const translation of translations) {
-          // Remove the translation's own ID and system fields
-          const {
-            id: translationId,
-            date_created: tDateCreated,
-            date_updated: tDateUpdated,
-            user_created: tUserCreated,
-            user_updated: tUserUpdated,
-            ...translationData
-          } = translation;
-          
-          // Create new translation linked to the new parent item
-          try {
-            await api.post(`/items/${props.collection}_translations`, {
-              ...translationData,
-              [foreignKeyField]: newItemId // Link to new parent
-            });
-          } catch (translationError) {
-            console.warn(`Failed to duplicate translation:`, translationError);
-            // Continue with other translations even if one fails
-          }
-        }
-      }
-      
-      // Note: Other relation types can be handled here in the future
-      // - M2O: Usually kept as-is (e.g., author, category)
-      // - M2M: Could duplicate junction entries if needed
-      // - Other O2M: Decide case by case (e.g., comments might not be copied)
+      // Use tableApi to duplicate with translations
+      await tableApi.duplicateItemWithTranslations(
+        props.collection,
+        itemId,
+        primaryKey,
+        true // include translations
+      );
     }
     
     notificationsStore.add({

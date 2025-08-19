@@ -1,7 +1,8 @@
 import { ref, computed, Ref, watch } from 'vue';
-import { useApi, useStores } from '@directus/extensions-sdk';
+import { useStores } from '@directus/extensions-sdk';
 import { Filter } from '@directus/types';
 import type { QuickFilter, LayoutOptions } from '../types/table.types';
+import { useTableApi } from './api';
 
 export interface FilterPreset extends QuickFilter {
   collection: string;
@@ -29,7 +30,7 @@ export function useFilterPresets(
   layoutOptions: Ref<LayoutOptions | undefined>,
   emit: (event: string, ...args: any[]) => void
 ) {
-  const api = useApi();
+  const tableApi = useTableApi();
   const { useUserStore } = useStores();
   const userStore = useUserStore();
   
@@ -182,7 +183,7 @@ export function useFilterPresets(
     
     // Also try to save to Directus presets API for backward compatibility
     try {
-      await api.post('/presets', {
+      await tableApi.savePreset({
         bookmark: preset.name,
         collection: collection.value,
         layout: 'super-layout-table',
