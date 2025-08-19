@@ -47,20 +47,6 @@
       </div>
     </div>
     
-    <!-- Active Filter Chips Display (DEBUG) -->
-    <!-- <ActiveFilterChips
-      v-if="showFilters && (quickFilterChips.length > 0 || manualFilterChips.length > 0)"
-      :quick-filters="quickFilterChips"
-      :manual-filters="manualFilterChips"
-      :filter-logic="filterLogic"
-      :show-logic-toggle="false"
-      :show-helper-text="false"
-      @remove-filter="removeFilter"
-      @clear-all="clearAllFilters"
-      @update:logic="filterLogic = $event"
-      @dismiss-helper="() => {}"
-    /> -->
-    
 
     <!-- Main Table -->
     <v-table
@@ -335,7 +321,6 @@ import { useFilterPresets } from './composables/useFilterPresets';
 import EditableCellRelational from './components/EditableCellRelational.vue';
 import RenameFieldDialog from './components/RenameFieldDialog.vue';
 import QuickFilters from './components/QuickFilters.vue';
-import ActiveFilterChips from './components/ActiveFilterChips.vue';
 import LanguageSelectionDialog from './components/LanguageSelectionDialog.vue';
 import type { Field, Item, Sort } from '@directus/types';
 import type { LayoutOptions, LayoutQuery, Language, TranslationUpdate, TableHeader, Edits } from './types/table.types';
