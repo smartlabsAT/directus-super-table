@@ -318,10 +318,14 @@ export function useTableApi() {
         fields: ['id', 'title', 'filename_download', 'type', 'folder', 'modified_on', 'filesize'],
         limit: options.limit || 50,
         page: options.page || 1,
-        sort: ['-uploaded_on']
+        sort: ['-uploaded_on'],
+        filter: {}
       };
 
-      if (options.folder !== undefined) {
+      // Set filter for folder - null means root level
+      if (options.folder === null || options.folder === undefined) {
+        params.filter = { folder: { _null: true } };
+      } else {
         params.filter = { folder: { _eq: options.folder } };
       }
 
@@ -340,10 +344,14 @@ export function useTableApi() {
       const folderParams: any = {
         fields: ['id', 'name', 'parent'],
         limit: -1,
-        sort: ['name']
+        sort: ['name'],
+        filter: {}
       };
 
-      if (options.folder !== undefined) {
+      // Set filter for parent folder - null means root level
+      if (options.folder === null || options.folder === undefined) {
+        folderParams.filter = { parent: { _null: true } };
+      } else {
         folderParams.filter = { parent: { _eq: options.folder } };
       }
 
