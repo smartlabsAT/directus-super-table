@@ -1,0 +1,65 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Run quality checks
+        run: pnpm run quality
+      
+      - name: Build extension
+        run: pnpm run build
+      
+      - name: Create release archive
+        run: |
+          mkdir -p release
+          cp -r dist release/
+          cp package.json release/
+          cp README.md release/ 2>/dev/null || echo "No README.md found"
+          cd release
+          tar -czf ../super-layout-table-${{ github.ref_name }}.tar.gz *
+          cd ..
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: super-layout-table-${{ github.ref_name }}.tar.gz
+          generate_release_notes: true
+          body: |
+            ## Super Layout Table Extension for Directus
+            
+            ### Installation
+            1. Download the release archive
+            2. Extract to your Directus extensions folder
+            3. Restart Directus
+            
+            ### Quality Checks
+            - ✅ TypeScript: No errors
+            - ✅ ESLint: No errors or warnings
+            - ✅ Prettier: Properly formatted
+            - ✅ Build: Successful
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

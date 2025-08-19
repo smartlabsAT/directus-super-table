@@ -1,5 +1,11 @@
 # Super Layout Table Extension for Directus
 
+![Quality Checks](https://github.com/smartlabsAT/directus-super-table/workflows/Quality%20Checks/badge.svg)
+![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue)
+![ESLint](https://img.shields.io/badge/ESLint-0%20errors-brightgreen)
+![Prettier](https://img.shields.io/badge/code%20style-prettier-ff69b4)
+![Directus](https://img.shields.io/badge/Directus-v11+-00B896)
+
 A powerful and feature-rich table layout extension for Directus 11+ that enhances the default table view with advanced functionality including inline editing, quick filters, bookmarks, and custom cell rendering.
 
 ## Version
@@ -199,7 +205,60 @@ pnpm lint
 
 # Type checking
 pnpm type-check
+
+# Run all quality checks
+pnpm quality
+
+# Fix linting issues
+pnpm lint:fix
+
+# Format code
+pnpm format
 ```
+
+## 🚀 GitHub Actions & CI/CD
+
+This extension includes comprehensive GitHub Actions workflows for maintaining code quality:
+
+### Automated Quality Checks
+Every push and pull request triggers automated quality validation:
+
+- **TypeScript Type Checking** - Ensures type safety across the codebase
+- **ESLint** - Enforces code quality standards (0 errors, 0 warnings)
+- **Prettier** - Validates consistent code formatting
+- **Build Validation** - Confirms the extension builds successfully
+
+### Workflow Files
+
+```
+.github/workflows/
+├── quality-checks.yml  # Main quality validation (runs on push/PR)
+├── pr-checks.yml      # PR-specific checks with auto-comments
+├── release.yml        # Automated release creation on tags
+└── badges.yml         # Status badge updates
+```
+
+### Running Locally
+You can run the same checks locally before pushing:
+
+```bash
+# Run all quality checks at once
+pnpm run quality
+
+# Individual checks
+pnpm run type-check    # TypeScript validation
+pnpm run lint          # ESLint checks
+pnpm run format:check  # Prettier validation
+pnpm run build         # Build test
+```
+
+### Pull Request Workflow
+1. Create your feature branch
+2. Make your changes
+3. Run `pnpm run quality` locally
+4. Push to GitHub
+5. GitHub Actions will automatically validate your code
+6. PR will receive an automated quality report comment
 
 ### Extension Configuration
 The extension can be configured through the Directus interface with these options:

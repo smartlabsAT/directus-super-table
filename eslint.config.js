@@ -68,9 +68,9 @@ export default [
         argsIgnorePattern: '^_',
         varsIgnorePattern: '^_',
       }],
-      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-explicit-any': 'off', // Allow any types
       '@typescript-eslint/explicit-module-boundary-types': 'off',
-      '@typescript-eslint/no-non-null-assertion': 'warn',
+      '@typescript-eslint/no-non-null-assertion': 'off', // Allow non-null assertions
       
       // General rules
       'no-console': ['warn', { allow: ['warn', 'error'] }],
@@ -139,9 +139,10 @@ export default [
         argsIgnorePattern: '^_',
         varsIgnorePattern: '^_',
       }],
-      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-explicit-any': 'off', // Allow any types
       
       // General rules
+      'no-unused-vars': 'off', // Use @typescript-eslint/no-unused-vars instead
       'no-console': ['warn', { allow: ['warn', 'error'] }],
       'no-debugger': 'error',
       

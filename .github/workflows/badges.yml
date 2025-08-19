@@ -1,0 +1,23 @@
+name: Update Badges
+
+on:
+  workflow_run:
+    workflows: ["Quality Checks"]
+    types:
+      - completed
+
+jobs:
+  update-badges:
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.conclusion == 'failure'
+    
+    steps:
+      - name: Create Badge JSON
+        run: |
+          if [ "${{ github.event.workflow_run.conclusion }}" == "success" ]; then
+            echo '{"schemaVersion": 1, "label": "build", "message": "passing", "color": "brightgreen"}' > build-badge.json
+            echo '{"schemaVersion": 1, "label": "tests", "message": "passing", "color": "brightgreen"}' > test-badge.json
+          else
+            echo '{"schemaVersion": 1, "label": "build", "message": "failing", "color": "red"}' > build-badge.json
+            echo '{"schemaVersion": 1, "label": "tests", "message": "failing", "color": "red"}' > test-badge.json
+          fi

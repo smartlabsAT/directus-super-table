@@ -118,7 +118,7 @@ const props = defineProps<{
   fieldKey: string;
   field: Field | null;
   edits?: any;
-  getDisplayValue?: () => any;
+  getDisplayValue?: (_item: Item, _key: string) => any;
   selectedLanguage?: string;
   saving?: boolean;
   editMode?: boolean;

@@ -1,0 +1,120 @@
+name: PR Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+jobs:
+  quality-report:
+    name: Quality Report
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Run quality checks with report
+        id: quality
+        continue-on-error: true
+        run: |
+          echo "## Quality Check Results" > quality-report.md
+          echo "" >> quality-report.md
+          
+          # TypeScript Check
+          echo "### TypeScript Type Check" >> quality-report.md
+          if pnpm run type-check 2>&1; then
+            echo "✅ **Passed** - No type errors found" >> quality-report.md
+          else
+            echo "❌ **Failed** - Type errors detected" >> quality-report.md
+            echo '```' >> quality-report.md
+            pnpm run type-check 2>&1 || true >> quality-report.md
+            echo '```' >> quality-report.md
+          fi
+          echo "" >> quality-report.md
+          
+          # ESLint Check
+          echo "### ESLint" >> quality-report.md
+          if pnpm run lint 2>&1; then
+            echo "✅ **Passed** - No linting errors" >> quality-report.md
+          else
+            echo "❌ **Failed** - Linting errors found" >> quality-report.md
+            echo '```' >> quality-report.md
+            pnpm run lint 2>&1 || true >> quality-report.md
+            echo '```' >> quality-report.md
+          fi
+          echo "" >> quality-report.md
+          
+          # Prettier Check
+          echo "### Prettier Format Check" >> quality-report.md
+          if pnpm run format:check 2>&1; then
+            echo "✅ **Passed** - Code is properly formatted" >> quality-report.md
+          else
+            echo "⚠️ **Warning** - Code formatting issues found" >> quality-report.md
+            echo "Run \`pnpm run format\` to fix formatting issues" >> quality-report.md
+          fi
+          echo "" >> quality-report.md
+          
+          # Build Check
+          echo "### Build" >> quality-report.md
+          if pnpm run build 2>&1; then
+            echo "✅ **Passed** - Extension builds successfully" >> quality-report.md
+          else
+            echo "❌ **Failed** - Build errors detected" >> quality-report.md
+          fi
+      
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('quality-report.md', 'utf8');
+            
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('## Quality Check Results')
+            );
+            
+            const commentBody = `${report}\n\n---\n*Updated: ${new Date().toISOString()}*`;
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: commentBody
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: commentBody
+              });
+            }
