@@ -8,7 +8,8 @@
 			placement="bottom-start"
 			show-arrow
 			:close-on-content-click="false"
-			:close-on-click="!colorPickerActive && interfaceType !== 'select-color'"
+			:close-on-click="false"
+			:focus-trap="false"
 		>
 			<template #activator="{ toggle, active }">
 				<!-- Cell Display with Edit Indicator -->
@@ -106,8 +107,6 @@
 					<!-- Color Picker -->
 					<div 
 						v-else-if="interfaceType === 'select-color'"
-						@click.stop="colorPickerActive = true"
-						@mousedown.stop
 					>
 						<component
 							:is="`interface-${interfaceType}`"
@@ -125,8 +124,6 @@
 							:type="'string'"
 							:disabled="false"
 							@input="handleColorChange"
-							@focus="colorPickerActive = true"
-							@blur="colorPickerActive = false"
 						/>
 					</div>
 
@@ -469,7 +466,7 @@ const instanceId = ref(Math.random().toString(36).substr(2, 9));
 const jsonError = ref<string | null>(null);
 const imageLoadError = ref(false);
 const showFileBrowser = ref(false);
-const colorPickerActive = ref(false);
+const hasEscapeHandler = ref(false); // Track if escape handler is added
 
 // File browser state
 const filesLoading = ref(false);
@@ -643,15 +640,35 @@ watch(menuActive, (active) => {
 		}
 		
 		openEditor();
+		
+		// Add escape handler but make sure it doesn't interfere with search
 		document.addEventListener('keydown', handleGlobalEscape);
+		hasEscapeHandler.value = true;
+		
 		// Set global flag
 		(window as any)[POPOVER_MANAGER_KEY] = instanceId.value;
 	} else {
-		document.removeEventListener('keydown', handleGlobalEscape);
+		// Clean up when closing
+		if (hasEscapeHandler.value) {
+			document.removeEventListener('keydown', handleGlobalEscape);
+			hasEscapeHandler.value = false;
+		}
+		
 		// Clear global flag if this was the active one
 		if ((window as any)[POPOVER_MANAGER_KEY] === instanceId.value) {
 			delete (window as any)[POPOVER_MANAGER_KEY];
 		}
+		
+		// Extra cleanup to ensure search field works
+		nextTick(() => {
+			// Make absolutely sure the search input is not blocked
+			const searchInput = document.querySelector('input[type="search"]') as HTMLInputElement;
+			if (searchInput) {
+				searchInput.removeAttribute('disabled');
+				searchInput.removeAttribute('readonly');
+				// Don't modify pointer-events or other styles, just ensure it's not disabled
+			}
+		});
 	}
 });
 
@@ -732,22 +749,14 @@ function saveAndClose() {
 		emit('save', localValue.value);
 		hasUnsavedChanges.value = false;
 	}
-	// Focus back to cell before closing to avoid focus-trap error
-	nextTick(() => {
-		cellRef.value?.focus();
-		menuActive.value = false;
-	});
+	menuActive.value = false;
 }
 
 function cancelEdit() {
 	localValue.value = originalValue.value;
 	hasUnsavedChanges.value = false;
 	emit('cancel');
-	// Focus back to cell before closing to avoid focus-trap error
-	nextTick(() => {
-		cellRef.value?.focus();
-		menuActive.value = false;
-	});
+	menuActive.value = false;
 }
 
 function handleBooleanChange(value: boolean) {
@@ -768,7 +777,6 @@ function handleSelectChange(value: any) {
 
 function handleColorChange(value: any) {
 	localValue.value = value;
-	colorPickerActive.value = false; // Reset flag after color is selected
 	if (props.autoSave) {
 		debouncedSave(value);
 	} else {
@@ -1021,12 +1029,7 @@ watch(() => localValue.value, () => {
 	imageLoadError.value = false;
 });
 
-// Reset color picker flag when menu closes
-watch(menuActive, (newVal) => {
-	if (!newVal) {
-		colorPickerActive.value = false;
-	}
-});
+// Menu close handled in main watch above
 
 // Handle file clear - currently unused
 // function handleFileClear() {
@@ -1084,9 +1087,19 @@ watch(localValue, (newValue) => {
 
 // Close on escape key globally
 function handleGlobalEscape(event: KeyboardEvent) {
-	if (event.key === 'Escape' && menuActive.value) {
+	// NEVER interfere with the search input or any input outside the popover
+	const target = event.target as HTMLElement;
+	const isInsidePopover = target?.closest('.edit-popover');
+	
+	// Only handle escape if:
+	// 1. The key is Escape
+	// 2. The menu is active
+	// 3. The target is inside the popover
+	if (event.key === 'Escape' && menuActive.value && isInsidePopover) {
 		cancelEdit();
 	}
+	// If escape is pressed outside the popover, ignore it completely
+	// Let other components handle their own escape key
 }
 
 // Lifecycle hooks
@@ -1099,6 +1112,13 @@ onMounted(() => {
 onUnmounted(() => {
 	// Clean up event listener
 	window.removeEventListener('close-inline-edit-popovers', handleCloseRequest as EventListener);
+	
+	// Clean up escape handler if still active
+	if (hasEscapeHandler.value) {
+		document.removeEventListener('keydown', handleGlobalEscape);
+		hasEscapeHandler.value = false;
+	}
+	
 	// Clean up global flag if this instance was active
 	if ((window as any)[POPOVER_MANAGER_KEY] === instanceId.value) {
 		delete (window as any)[POPOVER_MANAGER_KEY];
