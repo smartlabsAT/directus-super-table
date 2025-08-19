@@ -694,6 +694,22 @@ function buildSearchFilter(query: string) {
   const conditions: any[] = [];
   const processedFields = new Set<string>(); // Track processed fields to avoid duplicates
   
+  // Helper function to check if a string is a valid UUID
+  const isValidUUID = (str: string) => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(str);
+  };
+  
+  // Helper function to check if a string is a valid integer
+  const isValidInteger = (str: string) => {
+    return /^\d+$/.test(str);
+  };
+  
+  // Check if the search value is a valid UUID or integer
+  const searchIsUUID = isValidUUID(searchValue);
+  const searchIsInteger = isValidInteger(searchValue);
+  const searchAsInteger = searchIsInteger ? parseInt(searchValue, 10) : null;
+  
   // Process each visible field
   fields.value.forEach((fieldKey: string) => {
     // Remove language suffix if present (e.g., "translations.description:de-DE" -> "translations.description")
@@ -742,18 +758,49 @@ function buildSearchFilter(query: string) {
             _icontains: searchValue
           }
         });
+      } else if (field && field.type === 'uuid' && searchIsUUID) {
+        // For UUID fields, use _eq if the search value is a complete valid UUID
+        conditions.push({
+          [actualFieldKey]: {
+            _eq: searchValue
+          }
+        });
+      } else if (field && field.type === 'integer' && searchIsInteger) {
+        // For integer fields (including ID), use _eq if the search value is a valid integer
+        conditions.push({
+          [actualFieldKey]: {
+            _eq: searchAsInteger
+          }
+        });
       }
+      // Note: UUID fields only support _eq, _neq, _in, _nin comparisons
+      // Integer fields support exact match with _eq when searching by number
     }
   });
   
-  // If no searchable fields, fallback to all string fields
+  // If no searchable fields, fallback to all string/text/uuid/integer fields
   if (conditions.length === 0) {
     fieldsInCollection.value.forEach((field: Field) => {
       const searchableTypes = ['string', 'text'];
+      
       if (searchableTypes.includes(field.type) && !field.meta?.hidden) {
         conditions.push({
           [field.field]: {
             _icontains: searchValue
+          }
+        });
+      } else if (field.type === 'uuid' && !field.meta?.hidden && searchIsUUID) {
+        // Add UUID fields to search if we have a valid UUID
+        conditions.push({
+          [field.field]: {
+            _eq: searchValue
+          }
+        });
+      } else if (field.type === 'integer' && !field.meta?.hidden && searchIsInteger) {
+        // Add integer fields (including ID) to search if we have a valid integer
+        conditions.push({
+          [field.field]: {
+            _eq: searchAsInteger
           }
         });
       }
