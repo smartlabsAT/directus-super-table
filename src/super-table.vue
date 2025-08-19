@@ -62,9 +62,11 @@
       allow-header-reorder
       selection-use-keys
       :row-height="tableRowHeight"
+      :clickable="!editMode"
       @update:sort="onSortChange"
       @manual-sort="() => {}"
       @toggle-select-all="onToggleSelectAll"
+      @click:row="handleTableRowClick"
     >
       <!-- Header Context Menu -->
       <template #header-context-menu="{ header }">
@@ -197,26 +199,18 @@
         :key="header.value"
         #[`item.${header.value}`]="{ item }"
       >
-        <div
-          @click="handleRowClick($event, item)"
-          :style="{
-            cursor: 'pointer',
-            height: '100%',
-          }"
-        >
-          <editable-cell-relational
-            :item="item"
-            :field-key="header.value"
-            :field="header.field"
-            :edits="edits[item[primaryKeyField.value?.field || 'id']]?.[header.value]"
-            :get-display-value="getFromAliasedItem"
-            :saving="savingCells[`${item[primaryKeyField.value?.field || 'id']}_${header.value}`]"
-            :edit-mode="editMode"
-            :align="header.align"
-            @update="updateFieldValue"
-            @save="autoSaveEdits"
-          />
-        </div>
+        <editable-cell-relational
+          :item="item"
+          :field-key="header.value"
+          :field="header.field"
+          :edits="edits[item[primaryKeyField.value?.field || 'id']]?.[header.value]"
+          :get-display-value="getFromAliasedItem"
+          :saving="savingCells[`${item[primaryKeyField.value?.field || 'id']}_${header.value}`]"
+          :edit-mode="editMode"
+          :align="header.align"
+          @update="updateFieldValue"
+          @save="autoSaveEdits"
+        />
       </template>
 
       <!-- Empty State -->
@@ -1107,22 +1101,22 @@ function editItem(item: Item) {
   router.push(`/content/${collection.value}/${primaryKey}`);
 }
 
-function handleRowClick(event: MouseEvent, item: Item) {
-  const target = event.target as HTMLElement;
+function handleTableRowClick({ item, event }: { item: Item; event: MouseEvent }) {
+  // Don't navigate if edit mode is enabled
+  if (editMode.value) {
+    return;
+  }
 
-  // Don't navigate if:
-  // - A button/icon was clicked
-  // - An input/editor is active
-  // - Text is being selected
-  // - Click is on an editable cell that's currently being edited
+  const target = event?.target as HTMLElement;
+  
+  // Only block navigation for actual interactive elements when not in edit mode
+  // Allow clicks on regular cells to navigate
   if (
-    target.closest('button') ||
-    target.closest('.v-icon') ||
-    target.closest('.v-menu') ||
-    target.closest('input') ||
-    target.closest('textarea') ||
-    target.closest('.edit-popover') ||
-    target.closest('.is-editing') ||
+    target?.closest('button') ||
+    target?.closest('.v-checkbox') ||
+    target?.closest('input') ||
+    target?.closest('textarea') ||
+    target?.closest('.v-select') ||
     window.getSelection()?.toString()
   ) {
     return;
