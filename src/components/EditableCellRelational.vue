@@ -25,7 +25,11 @@
     <template #display="{ value }">
       <!-- Use custom ColorCell for color fields -->
       <ColorCell
-        v-if="field?.interface === 'select-color' || field?.interface === 'color' || actualFieldKey.includes('color')"
+        v-if="
+          field?.interface === 'select-color' ||
+          field?.interface === 'color' ||
+          actualFieldKey.includes('color')
+        "
         :value="value"
         :item="item"
         :field="actualFieldKey"
@@ -33,7 +37,15 @@
       />
       <!-- Use custom ImageCell for image fields -->
       <ImageCell
-        v-else-if="field?.interface === 'file-image' || field?.interface === 'file' || field?.interface === 'image' || (field?.type === 'uuid' && (actualFieldKey.includes('image') || actualFieldKey.includes('photo') || actualFieldKey.includes('picture')))"
+        v-else-if="
+          field?.interface === 'file-image' ||
+          field?.interface === 'file' ||
+          field?.interface === 'image' ||
+          (field?.type === 'uuid' &&
+            (actualFieldKey.includes('image') ||
+              actualFieldKey.includes('photo') ||
+              actualFieldKey.includes('picture')))
+        "
         :value="value"
         :item="item"
         :field="actualFieldKey"
@@ -77,11 +89,7 @@
   </InlineEditPopover>
 
   <!-- Display only for relational fields -->
-  <div
-    v-else
-    class="editable-cell relational"
-    :style="{ textAlign: props.align || 'left' }"
-  >
+  <div v-else class="editable-cell relational" :style="{ textAlign: props.align || 'left' }">
     <render-display
       :value="displayValue"
       :display="field?.display"
@@ -110,7 +118,7 @@ const props = defineProps<{
   fieldKey: string;
   field: Field | null;
   edits?: any;
-  getDisplayValue?: (item: Item, key: string) => any;
+  getDisplayValue?: () => any;
   selectedLanguage?: string;
   saving?: boolean;
   editMode?: boolean;
@@ -126,9 +134,7 @@ const emit = defineEmits<{
 
 // Computed
 const primaryKeyField = computed(() => {
-  return Object.keys(props.item).find(key => 
-    key === 'id' || key.endsWith('_id')
-  ) || 'id';
+  return Object.keys(props.item).find((key) => key === 'id' || key.endsWith('_id')) || 'id';
 });
 
 // Extract language code if present in field key
@@ -152,42 +158,40 @@ const displayValue = computed(() => {
   if (props.edits !== undefined) {
     return props.edits;
   }
-  
-  
+
   // Special handling for translations fields
   if (actualFieldKey.value.includes('translations.')) {
     const translationField = actualFieldKey.value.split('.').slice(1).join('.');
-    
+
     // Check if translations exist and is an array
     if (Array.isArray(props.item.translations) && props.item.translations.length > 0) {
       // Use the language from field key (if specified) or the selected language
       const targetLanguage = fieldLanguage.value;
-      
-      
+
       if (targetLanguage) {
         const translation = props.item.translations.find(
           (t: any) => t.languages_code === targetLanguage
         );
-        
+
         // Return the specific field value if translation exists
         if (translation) {
           return translation[translationField] || null;
         }
       }
-      
+
       // No translation for this language
       return null;
     }
-    
+
     // No translations available at all
     return null;
   }
-  
+
   // For other relational fields, use the aliased getter if provided
   if (props.getDisplayValue) {
     return props.getDisplayValue(props.item, props.fieldKey);
   }
-  
+
   // For normal fields with dot notation
   if (props.fieldKey.includes('.')) {
     const parts = props.fieldKey.split('.');
@@ -197,35 +201,37 @@ const displayValue = computed(() => {
     }
     return value;
   }
-  
+
   // Simple field access
   return props.item[props.fieldKey];
 });
 
 // Check if field is a hash/password field that should not be editable
 const isHashField = computed(() => {
-  return props.field?.type === 'hash' || 
-         props.field?.meta?.interface === 'input-hash' ||
-         props.field?.meta?.interface === 'password' ||
-         actualFieldKey.value.includes('password') ||
-         actualFieldKey.value.includes('secret');
+  return (
+    props.field?.type === 'hash' ||
+    props.field?.meta?.interface === 'input-hash' ||
+    props.field?.meta?.interface === 'password' ||
+    actualFieldKey.value.includes('password') ||
+    actualFieldKey.value.includes('secret')
+  );
 });
 
 // Check if field is relational
 const isRelational = computed(() => {
   if (!props.field) return false;
-  
+
   // Translation fields should be editable even though they use dot notation
   if (actualFieldKey.value.startsWith('translations.')) {
     return false; // Allow editing of translation fields
   }
-  
+
   // Check for relational special flags
   const special = props.field.meta?.special;
   if (Array.isArray(special)) {
-    return special.some(s => ['m2o', 'o2m', 'm2m', 'm2a'].includes(s));
+    return special.some((s) => ['m2o', 'o2m', 'm2m', 'm2a'].includes(s));
   }
-  
+
   // Check if field key contains dot notation (nested field)
   return actualFieldKey.value.includes('.');
 });
@@ -233,7 +239,7 @@ const isRelational = computed(() => {
 // Check if field has a relational interface
 const isRelationalInterface = computed(() => {
   if (!props.field) return false;
-  
+
   const relationalInterfaces = [
     'many-to-one',
     'one-to-many',
@@ -242,19 +248,21 @@ const isRelationalInterface = computed(() => {
     'list-m2m',
     'list-o2m',
     'list-m2a',
-    'files'
+    'files',
   ];
-  
+
   return relationalInterfaces.includes(props.field.interface || '');
 });
-
 
 // Get interface options
 const interfaceOptions = computed(() => {
   const options = props.field?.interfaceOptions || props.field?.meta?.options || {};
-  
+
   // Add field-specific props
-  if (props.field?.interface === 'select-dropdown' || props.field?.meta?.interface === 'select-dropdown') {
+  if (
+    props.field?.interface === 'select-dropdown' ||
+    props.field?.meta?.interface === 'select-dropdown'
+  ) {
     return {
       ...options,
       items: options.choices || [],
@@ -262,14 +270,14 @@ const interfaceOptions = computed(() => {
       itemValue: 'value',
     };
   }
-  
+
   if (props.field?.type === 'integer' || props.field?.type === 'float') {
     return {
       ...options,
       type: 'number',
     };
   }
-  
+
   return options;
 });
 
@@ -279,17 +287,15 @@ function getInterfaceType() {
 }
 
 function handleUpdate(value: any) {
-  const primaryKey = Object.keys(props.item).find(key => 
-    key === 'id' || key.endsWith('_id')
-  );
-  
+  const primaryKey = Object.keys(props.item).find((key) => key === 'id' || key.endsWith('_id'));
+
   if (primaryKey) {
     // Check if this is a full translations update
     if (typeof value === 'object' && value?.isFullTranslations) {
       // Handle full translations update from interface-translations
       emit('update', props.item[primaryKey], 'translations', {
         isFullTranslations: true,
-        translations: value.translations
+        translations: value.translations,
       });
     }
     // Special handling for single translation field
@@ -300,7 +306,7 @@ function handleUpdate(value: any) {
         translationField,
         value,
         language: fieldLanguage.value, // Use language from field key or selected
-        isTranslation: true
+        isTranslation: true,
       };
       emit('update', props.item[primaryKey], props.fieldKey, translationUpdate);
     } else {
@@ -317,36 +323,36 @@ function handleSave(value: any) {
 function navigateToNextCell() {
   const cells = document.querySelectorAll('.inline-edit-wrapper .edit-cell');
   const currentCell = document.activeElement?.closest('.inline-edit-wrapper');
-  
+
   if (currentCell) {
-    const currentIndex = Array.from(cells).findIndex(cell => 
-      cell.closest('.inline-edit-wrapper') === currentCell
+    const currentIndex = Array.from(cells).findIndex(
+      (cell) => cell.closest('.inline-edit-wrapper') === currentCell
     );
     const nextCell = cells[currentIndex + 1] as HTMLElement;
-    
+
     if (nextCell) {
       nextCell.click();
     }
   }
-  
+
   emit('navigate-next');
 }
 
 function navigateToPrevCell() {
   const cells = document.querySelectorAll('.inline-edit-wrapper .edit-cell');
   const currentCell = document.activeElement?.closest('.inline-edit-wrapper');
-  
+
   if (currentCell) {
-    const currentIndex = Array.from(cells).findIndex(cell => 
-      cell.closest('.inline-edit-wrapper') === currentCell
+    const currentIndex = Array.from(cells).findIndex(
+      (cell) => cell.closest('.inline-edit-wrapper') === currentCell
     );
     const prevCell = cells[currentIndex - 1] as HTMLElement;
-    
+
     if (prevCell) {
       prevCell.click();
     }
   }
-  
+
   emit('navigate-prev');
 }
 </script>
@@ -386,5 +392,4 @@ function navigateToPrevCell() {
   white-space: nowrap;
   width: 100%;
 }
-
 </style>

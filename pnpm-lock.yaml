@@ -63,6 +63,9 @@ importers:
       vue:
         specifier: ^3.3.0
         version: 3.5.18(typescript@5.9.2)
+      vue-eslint-parser:
+        specifier: ^10.2.0
+        version: 10.2.0(eslint@9.33.0)
       vue-tsc:
         specifier: ^3.0.5
         version: 3.0.5(typescript@5.9.2)

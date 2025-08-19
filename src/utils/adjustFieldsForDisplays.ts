@@ -13,7 +13,7 @@ export function adjustFieldsForDisplays(
   try {
     const { useFieldsStore } = useStores();
     fieldsStore = useFieldsStore();
-  } catch (error) {
+  } catch {
     // Stores not available in this context, continue without special handling
   }
 
@@ -36,7 +36,7 @@ export function adjustFieldsForDisplays(
             // Keep the specific translation field path
             adjustedFields.add(fieldKey);
           }
-        } catch (error) {
+        } catch {
           // Field not found or error accessing it, continue
         }
       }

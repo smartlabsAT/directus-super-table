@@ -38,7 +38,7 @@ export function useLanguageSelector() {
           { code: 'es-ES', name: 'Español' },
         ];
       }
-    } catch (error) {
+    } catch {
       // Fallback to common languages on error
       languages.value = [
         { code: 'en-US', name: 'English' },

@@ -51,6 +51,7 @@
     "prettier": "^3.6.2",
     "typescript": "^5.0.0",
     "vue": "^3.3.0",
+    "vue-eslint-parser": "^10.2.0",
     "vue-tsc": "^3.0.5"
   }
 }

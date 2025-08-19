@@ -53,7 +53,6 @@ const editMode = computed({
     };
   },
 });
-
 </script>
 
 <style scoped>

@@ -12,9 +12,9 @@
         <template #activator="{ toggle }">
           <v-button
             :class="[
-              'quick-filter-button', 
+              'quick-filter-button',
               `color-${preset.color || 'primary'}`,
-              { active: isPresetActive(preset.id) }
+              { active: isPresetActive(preset.id) },
             ]"
             secondary
             small
@@ -28,7 +28,7 @@
             </span>
           </v-button>
         </template>
-        
+
         <v-list>
           <!-- Edit Fields Container - Not clickable -->
           <div class="context-edit-container" @click.stop>
@@ -43,7 +43,7 @@
                 @click.stop
               />
             </div>
-            
+
             <!-- Icon Selector -->
             <div class="context-edit-field">
               <label class="context-label">Icon</label>
@@ -53,7 +53,7 @@
                 @click.stop="fixIconMenuScroll"
               />
             </div>
-            
+
             <!-- Color Selector -->
             <div class="context-edit-field">
               <label class="context-label">Color</label>
@@ -61,14 +61,17 @@
                 <div
                   v-for="color in colorOptions"
                   :key="color"
-                  :class="['context-color-circle', { active: (preset.color || 'primary') === color }]"
+                  :class="[
+                    'context-color-circle',
+                    { active: (preset.color || 'primary') === color },
+                  ]"
                   :style="{ backgroundColor: getColorValue(color) }"
                   :title="getColorLabel(color)"
                   @click.stop="updatePresetColor(preset, color)"
                 >
-                  <v-icon 
-                    v-if="(preset.color || 'primary') === color" 
-                    name="check" 
+                  <v-icon
+                    v-if="(preset.color || 'primary') === color"
+                    name="check"
                     x-small
                     class="color-check"
                   />
@@ -76,44 +79,28 @@
               </div>
             </div>
           </div>
-          
+
           <v-divider />
-          
+
           <!-- Move Actions -->
-          <v-list-item
-            v-if="canMoveLeft(preset)"
-            clickable
-            @click="movePreset(preset, -1)"
-          >
+          <v-list-item v-if="canMoveLeft(preset)" clickable @click="movePreset(preset, -1)">
             <v-list-item-icon>
               <v-icon name="arrow_back" />
             </v-list-item-icon>
-            <v-list-item-content>
-              Move Left
-            </v-list-item-content>
+            <v-list-item-content> Move Left </v-list-item-content>
           </v-list-item>
-          
-          <v-list-item
-            v-if="canMoveRight(preset)"
-            clickable
-            @click="movePreset(preset, 1)"
-          >
+
+          <v-list-item v-if="canMoveRight(preset)" clickable @click="movePreset(preset, 1)">
             <v-list-item-icon>
               <v-icon name="arrow_forward" />
             </v-list-item-icon>
-            <v-list-item-content>
-              Move Right
-            </v-list-item-content>
+            <v-list-item-content> Move Right </v-list-item-content>
           </v-list-item>
-          
+
           <v-divider v-if="canMoveLeft(preset) || canMoveRight(preset)" />
-          
+
           <!-- Delete -->
-          <v-list-item
-            clickable
-            class="danger"
-            @click="deletePreset(preset)"
-          >
+          <v-list-item clickable class="danger" @click="deletePreset(preset)">
             <v-list-item-icon>
               <v-icon name="delete" />
             </v-list-item-icon>
@@ -123,21 +110,16 @@
           </v-list-item>
         </v-list>
       </v-menu>
-      
+
       <!-- More Filters Dropdown -->
       <v-menu v-if="hasMorePresets" placement="bottom-end" show-arrow>
         <template #activator="{ toggle }">
-          <v-button
-            secondary
-            small
-            class="more-filters-button"
-            @click="toggle"
-          >
+          <v-button secondary small class="more-filters-button" @click="toggle">
             <v-icon name="expand_more" small />
             More filters...
           </v-button>
         </template>
-        
+
         <v-list>
           <v-list-item
             v-for="preset in hiddenPresets"
@@ -158,9 +140,8 @@
           </v-list-item>
         </v-list>
       </v-menu>
-      
     </div>
-    
+
     <!-- Save Preset Dialog -->
     <v-dialog
       v-model="saveDialogActive"
@@ -172,25 +153,19 @@
         <v-notice v-if="hasNativeFilters" type="info">
           Saving filter from native interface - it will appear as a Quick Filter button
         </v-notice>
-        
+
         <v-input
           v-model="newPresetName"
           :placeholder="t('Quick Filter name (e.g. Active Items, This Month)')"
           autofocus
           @keydown.enter="savePreset"
         />
-        
-        <v-input
-          v-model="newPresetDescription"
-          :placeholder="t('Description (optional)')"
-        />
-        
+
+        <v-input v-model="newPresetDescription" :placeholder="t('Description (optional)')" />
+
         <div class="preset-options">
-          <v-checkbox
-            v-model="newPresetPinned"
-            :label="t('Pin to quick filters')"
-          />
-          
+          <v-checkbox v-model="newPresetPinned" :label="t('Pin to quick filters')" />
+
           <v-checkbox
             v-model="newPresetShared"
             :label="t('Share with team')"
@@ -198,20 +173,17 @@
           />
         </div>
       </div>
-      
+
       <template #actions>
         <v-button secondary @click="saveDialogActive = false">
           {{ t('Cancel') }}
         </v-button>
-        <v-button
-          :disabled="!newPresetName"
-          @click="savePreset"
-        >
+        <v-button :disabled="!newPresetName" @click="savePreset">
           {{ t('Save') }}
         </v-button>
       </template>
     </v-dialog>
-    
+
     <!-- Delete Confirmation Dialog -->
     <v-dialog
       v-if="deleteDialogActive"
@@ -222,9 +194,7 @@
       <v-card>
         <v-card-title>Delete Quick Filter</v-card-title>
         <v-card-text>
-          <v-notice type="danger">
-            Are you sure you want to delete this filter?
-          </v-notice>
+          <v-notice type="danger"> Are you sure you want to delete this filter? </v-notice>
           <div v-if="presetToDelete" class="filter-name">
             <strong>{{ presetToDelete.name }}</strong>
           </div>
@@ -234,9 +204,7 @@
           </div>
         </v-card-text>
         <v-card-actions>
-          <v-button secondary @click="cancelDelete">
-            Cancel
-          </v-button>
+          <v-button secondary @click="cancelDelete"> Cancel </v-button>
           <v-button kind="danger" @click="confirmDelete">
             <v-icon name="delete" />
             Delete Filter
@@ -269,7 +237,7 @@ const props = withDefaults(defineProps<Props>(), {
   maxVisible: 5,
   showResultCount: false,
   canSaveFilters: true,
-  canSharePresets: false
+  canSharePresets: false,
 });
 
 const emit = defineEmits<{
@@ -289,32 +257,32 @@ const colorOptions = ['primary', 'gray', 'success', 'warning', 'danger', 'info']
 function fixIconMenuScroll() {
   // Use multiple timeouts to catch the menu at different stages of rendering
   const delays = [0, 50, 100, 200, 300];
-  
-  delays.forEach(delay => {
+
+  delays.forEach((delay) => {
     setTimeout(() => {
       // Find all v-menu-content elements
       const menus = document.querySelectorAll('.v-menu-content');
-      
-      menus.forEach(menu => {
+
+      menus.forEach((menu) => {
         // Check if this menu has icons (is an icon selector)
         if (menu.querySelector('.icons')) {
           const menuEl = menu as HTMLElement;
-          
+
           // Force the styles with inline style
           menuEl.style.cssText = `
             max-height: 400px !important;
             overflow-y: auto !important;
             overflow-x: hidden !important;
           `;
-          
+
           // Also try setting via setAttribute for extra measure
           menuEl.setAttribute('style', menuEl.style.cssText);
         }
       });
-      
+
       // Also try with the popper element
       const poppers = document.querySelectorAll('.v-menu-popper');
-      poppers.forEach(popper => {
+      poppers.forEach((popper) => {
         const content = popper.querySelector('.v-menu-content');
         if (content && content.querySelector('.icons')) {
           const contentEl = content as HTMLElement;
@@ -349,15 +317,11 @@ const sortedPresets = computed(() => {
 });
 
 const visiblePresets = computed(() => {
-  return sortedPresets.value
-    .filter(p => p.isPinned !== false)
-    .slice(0, props.maxVisible);
+  return sortedPresets.value.filter((p) => p.isPinned !== false).slice(0, props.maxVisible);
 });
 
 const hiddenPresets = computed(() => {
-  return sortedPresets.value
-    .filter(p => p.isPinned !== false)
-    .slice(props.maxVisible);
+  return sortedPresets.value.filter((p) => p.isPinned !== false).slice(props.maxVisible);
 });
 
 const hasMorePresets = computed(() => {
@@ -393,12 +357,12 @@ function togglePreset(preset: FilterPreset) {
 
 function savePreset() {
   if (!newPresetName.value) return;
-  
+
   // Prioritize native filter if available, otherwise use current merged filter
   const filterToSave = props.nativeFilter || props.currentFilter;
-  
+
   if (!filterToSave) return;
-  
+
   emit('save-preset', {
     name: newPresetName.value,
     description: newPresetDescription.value,
@@ -406,9 +370,9 @@ function savePreset() {
     filter: filterToSave,
     isPinned: newPresetPinned.value,
     isShared: newPresetShared.value,
-    order: props.presets.length
+    order: props.presets.length,
   });
-  
+
   saveDialogActive.value = false;
 }
 
@@ -434,14 +398,14 @@ function cancelDelete() {
 function canMoveLeft(preset: FilterPreset): boolean {
   // Find index in ALL presets (not just visible)
   const allFilters = props.presets || [];
-  const index = allFilters.findIndex(p => p.id === preset.id);
+  const index = allFilters.findIndex((p) => p.id === preset.id);
   return index > 0;
 }
 
 function canMoveRight(preset: FilterPreset): boolean {
   // Find index in ALL presets (not just visible)
   const allFilters = props.presets || [];
-  const index = allFilters.findIndex(p => p.id === preset.id);
+  const index = allFilters.findIndex((p) => p.id === preset.id);
   return index >= 0 && index < allFilters.length - 1;
 }
 
@@ -471,24 +435,24 @@ function updatePresetColor(preset: FilterPreset, color: string) {
 // Helper functions for colors
 function getColorValue(colorName: string): string {
   const colorMap: Record<string, string> = {
-    'primary': 'var(--primary)',
-    'gray': '#6c757d',
-    'success': 'var(--success)',
-    'warning': 'var(--warning)',
-    'danger': 'var(--danger)',
-    'info': 'var(--info)'
+    primary: 'var(--primary)',
+    gray: '#6c757d',
+    success: 'var(--success)',
+    warning: 'var(--warning)',
+    danger: 'var(--danger)',
+    info: 'var(--info)',
   };
   return colorMap[colorName] || 'var(--primary)';
 }
 
 function getColorLabel(colorName: string): string {
   const labelMap: Record<string, string> = {
-    'primary': 'Primary',
-    'gray': 'Gray',
-    'success': 'Success',
-    'warning': 'Warning',
-    'danger': 'Danger',
-    'info': 'Info'
+    primary: 'Primary',
+    gray: 'Gray',
+    success: 'Success',
+    warning: 'Warning',
+    danger: 'Danger',
+    info: 'Info',
   };
   return labelMap[colorName] || 'Primary';
 }
@@ -658,7 +622,6 @@ function getColorLabel(colorName: string): string {
   white-space: nowrap;
 }
 
-
 .preset-description {
   display: block;
   color: var(--foreground-subdued);
@@ -693,7 +656,7 @@ function getColorLabel(colorName: string): string {
   animation: pulse 0.3s ease;
   position: relative;
   transform: translateY(-1px);
-  box-shadow: 
+  box-shadow:
     0 4px 8px rgba(0, 0, 0, 0.1),
     0 0 0 2px var(--background-page),
     0 0 0 3px currentColor;
@@ -707,23 +670,35 @@ function getColorLabel(colorName: string): string {
   right: -4px;
   width: 8px;
   height: 8px;
-  background: #3399FF;
-  border: 2px solid #3399FF;
+  background: #3399ff;
+  border: 2px solid #3399ff;
   border-radius: 50%;
   z-index: 1;
   animation: pulse-dot 2s infinite;
 }
 
-
 @keyframes pulse {
-  0% { transform: scale(1) translateY(-1px); }
-  50% { transform: scale(1.01) translateY(-1px); }
-  100% { transform: scale(1) translateY(-1px); }
+  0% {
+    transform: scale(1) translateY(-1px);
+  }
+  50% {
+    transform: scale(1.01) translateY(-1px);
+  }
+  100% {
+    transform: scale(1) translateY(-1px);
+  }
 }
 
 @keyframes pulse-dot {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.9; transform: scale(1.1); }
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.1);
+  }
 }
 
 /* Danger list item styling */

@@ -1,15 +1,16 @@
 <!-- ./extensions/layouts/super-layout-table/components/CellRenderers/ColorCell.vue -->
 <template>
   <div class="color-cell">
-    <div v-if="colorValue" class="color-display" @mouseenter="showCopyIcon = true" @mouseleave="showCopyIcon = false">
-      <div 
-        class="color-preview" 
-        :style="{ backgroundColor: colorValue }"
-        :title="colorValue"
-      />
+    <div
+      v-if="colorValue"
+      class="color-display"
+      @mouseenter="showCopyIcon = true"
+      @mouseleave="showCopyIcon = false"
+    >
+      <div class="color-preview" :style="{ backgroundColor: colorValue }" :title="colorValue" />
       <span class="color-value">{{ colorValue }}</span>
       <transition name="fade">
-        <button 
+        <button
           v-if="showCopyIcon && !isEditMode"
           class="copy-button"
           @click.stop="copyToClipboard"
@@ -27,8 +28,8 @@
 import { computed, ref } from 'vue';
 import { useStores } from '@directus/extensions-sdk';
 
-const props = defineProps<{ 
-  value?: string | null; 
+const props = defineProps<{
+  value?: string | null;
   item?: any;
   field?: string;
   editMode?: boolean;
@@ -45,27 +46,27 @@ const isEditMode = computed(() => props.editMode);
 
 const colorValue = computed(() => {
   if (!props.value) return null;
-  
+
   // Handle color object format (some interfaces return {color: '#hex'})
   if (typeof props.value === 'object' && props.value && 'color' in props.value) {
     return (props.value as any).color;
   }
-  
+
   // Handle direct color string
   if (typeof props.value === 'string') {
     return props.value;
   }
-  
+
   return null;
 });
 
 async function copyToClipboard() {
   if (!colorValue.value) return;
-  
+
   try {
     await navigator.clipboard.writeText(colorValue.value);
     copied.value = true;
-    
+
     notificationsStore.add({
       title: 'Color copied!',
       text: `${colorValue.value} copied to clipboard`,
@@ -73,12 +74,12 @@ async function copyToClipboard() {
       persist: false,
       closeable: true,
     });
-    
+
     // Reset copied state after 2 seconds
     setTimeout(() => {
       copied.value = false;
     }, 2000);
-  } catch (err) {
+  } catch {
     notificationsStore.add({
       title: 'Failed to copy',
       text: 'Could not copy color to clipboard',
@@ -123,13 +124,17 @@ async function copyToClipboard() {
   left: 0;
   width: 100%;
   height: 100%;
-  background-image: 
+  background-image:
     linear-gradient(45deg, #e0e0e0 25%, transparent 25%),
     linear-gradient(-45deg, #e0e0e0 25%, transparent 25%),
     linear-gradient(45deg, transparent 75%, #e0e0e0 75%),
     linear-gradient(-45deg, transparent 75%, #e0e0e0 75%);
   background-size: 8px 8px;
-  background-position: 0 0, 0 4px, 4px -4px, -4px 0px;
+  background-position:
+    0 0,
+    0 4px,
+    4px -4px,
+    -4px 0px;
   z-index: -1;
 }
 
@@ -192,13 +197,13 @@ async function copyToClipboard() {
 
 /* Dark mode adjustments */
 body.dark .color-preview {
-  box-shadow: 
+  box-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, 0.2),
     0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 body.dark .color-preview::before {
-  background-image: 
+  background-image:
     linear-gradient(45deg, #333 25%, transparent 25%),
     linear-gradient(-45deg, #333 25%, transparent 25%),
     linear-gradient(45deg, transparent 75%, #333 75%),

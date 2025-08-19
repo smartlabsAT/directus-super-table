@@ -104,7 +104,7 @@ export function useTableEdits(
 
       // Refresh the item data
       await getItems();
-    } catch (error) {
+    } catch {
       // Failed to save edits
     } finally {
       // Clear saving state

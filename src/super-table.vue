@@ -15,15 +15,11 @@
               <v-icon name="search" />
             </template>
             <template #append v-if="searchQuery">
-              <v-icon
-                name="close"
-                clickable
-                @click="searchQuery = ''"
-              />
+              <v-icon name="close" clickable @click="searchQuery = ''" />
             </template>
           </v-input>
         </div>
-        
+
         <!-- Quick Filter Buttons -->
         <QuickFilters
           v-if="showFilters"
@@ -40,10 +36,11 @@
           @update-preset="updateFilterPreset"
         />
       </div>
-      
+
       <!-- Selection count -->
       <div v-if="(selection?.value?.length || 0) > 0" class="selection-count">
-        {{ selection?.value?.length || 0 }} {{ (selection?.value?.length || 0) === 1 ? 'item' : 'items' }} selected
+        {{ selection?.value?.length || 0 }}
+        {{ (selection?.value?.length || 0) === 1 ? 'item' : 'items' }} selected
       </div>
     </div>
     <!-- Main Table -->
@@ -143,22 +140,14 @@
 
           <v-divider />
 
-          <v-list-item
-            clickable
-            @click="renameField(header.value)"
-          >
+          <v-list-item clickable @click="renameField(header.value)">
             <v-list-item-icon>
               <v-icon name="edit" />
             </v-list-item-icon>
-            <v-list-item-content>
-              Rename
-            </v-list-item-content>
+            <v-list-item-content> Rename </v-list-item-content>
           </v-list-item>
 
-          <v-list-item
-            clickable
-            @click="removeField(header.value)"
-          >
+          <v-list-item clickable @click="removeField(header.value)">
             <v-list-item-icon>
               <v-icon name="visibility_off" />
             </v-list-item-icon>
@@ -180,7 +169,7 @@
           clickable
           @click="editMode = !editMode"
         />
-        
+
         <v-menu placement="bottom-end" show-arrow :close-on-content-click="false">
           <template #activator="{ toggle, active }">
             <v-icon
@@ -193,12 +182,11 @@
             />
           </template>
 
-
           <v-field-list
-              :collection="collection"
-              :disabled-fields="fields"
-              :allow-select-all="false"
-              @add="handleAddField($event[0])"
+            :collection="collection"
+            :disabled-fields="fields"
+            :allow-select-all="false"
+            @add="handleAddField($event[0])"
           />
         </v-menu>
       </template>
@@ -213,7 +201,7 @@
           @click="handleRowClick($event, item)"
           :style="{
             cursor: 'pointer',
-            height: '100%'
+            height: '100%',
           }"
         >
           <editable-cell-relational
@@ -230,7 +218,6 @@
           />
         </div>
       </template>
-
 
       <!-- Empty State -->
       <template #no-data>
@@ -266,7 +253,7 @@
             { text: '100', value: 100 },
             { text: '250', value: 250 },
             { text: '500', value: 500 },
-            { text: '1000', value: 1000 }
+            { text: '1000', value: 1000 },
           ]"
           inline
         />
@@ -281,7 +268,7 @@
       @cancel="cancelRename"
       @reset="resetToOriginal"
     />
-    
+
     <!-- Language Selection Dialog for Translation Fields -->
     <LanguageSelectionDialog
       v-model="showLanguageDialog"
@@ -299,11 +286,7 @@ import { ref, computed, toRefs, watch, unref, onMounted, onUnmounted, type Ref }
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { debounce } from 'lodash';
-import {
-  useStores,
-  useCollection,
-  useSync,
-} from '@directus/extensions-sdk';
+import { useStores, useCollection, useSync } from '@directus/extensions-sdk';
 import { formatTitle } from '@directus/format-title';
 import { getDefaultDisplayForType } from './utils/getDefaultDisplayForType';
 import { adjustFieldsForDisplays } from './utils/adjustFieldsForDisplays';
@@ -359,25 +342,20 @@ const layoutQuery = useSync(props, 'layoutQuery', emit);
 
 // Collection info
 const { collection, filter, search } = toRefs(props);
-const {
-  primaryKeyField,
-  fields: fieldsInCollection,
-  sortField,
-} = useCollection(collection.value);
-
+const { primaryKeyField, fields: fieldsInCollection, sortField } = useCollection(collection.value);
 
 // Watch for changes in layoutOptions to sync customFieldNames
-watch(() => layoutOptions.value?.customFieldNames, (newNames) => {
-  if (newNames) {
-    customFieldNames.value = newNames;
+watch(
+  () => layoutOptions.value?.customFieldNames,
+  (newNames) => {
+    if (newNames) {
+      customFieldNames.value = newNames;
+    }
   }
-});
+);
 
 // Language Selector - Only for fetching available languages
-const { 
-  languages, 
-  fetchLanguages, 
-} = useLanguageSelector();
+const { languages, fetchLanguages } = useLanguageSelector();
 
 // Language items for v-select
 const languageItems = computed(() => {
@@ -388,17 +366,17 @@ const languageItems = computed(() => {
       { code: 'en-US', name: 'English' },
       { code: 'fr-FR', name: 'Français' },
       { code: 'es-ES', name: 'Español' },
-      { code: 'it-IT', name: 'Italiano' }
+      { code: 'it-IT', name: 'Italiano' },
     ];
-    return fallbackLangs.map(lang => ({
+    return fallbackLangs.map((lang) => ({
       text: lang.name,
-      value: lang.code
+      value: lang.code,
     }));
   }
-  
-  return languages.value.map(lang => ({
+
+  return languages.value.map((lang) => ({
     text: lang.name,
-    value: lang.code
+    value: lang.code,
   }));
 });
 
@@ -441,7 +419,7 @@ const fields = computed({
   },
   set(value) {
     layoutQuery.value = { ...layoutQuery.value, fields: value };
-  }
+  },
 });
 
 // Create a computed that strips language suffixes for aliasing
@@ -456,50 +434,48 @@ const fieldsForAliasing = computed(() => {
 });
 
 // Use alias fields for proper relational data handling
-const { aliasQuery, getFromAliasedItem } = useAliasFields(
-  fieldsForAliasing,
-  collection
-);
+const { aliasQuery, getFromAliasedItem } = useAliasFields(fieldsForAliasing, collection);
 
 // Adjust fields for displays
 const fieldsWithRelational = computed(() => {
   if (!props.collection) return [];
-  
+
   // Get unique fields without language suffixes for API query
   // We fetch all translation data and filter client-side by language
-  const uniqueFields = [...new Set(fields.value.map((field: string) => {
-    return field.includes(':') ? field.split(':')[0] : field;
-  }))];
-  
+  const uniqueFields = [
+    ...new Set(
+      fields.value.map((field: string) => {
+        return field.includes(':') ? field.split(':')[0] : field;
+      })
+    ),
+  ];
+
   const adjustedFields: string[] = adjustFieldsForDisplays(uniqueFields, props.collection);
-  
+
   // Ensure languages_code is included for translations
   if (hasTranslationFields.value && !adjustedFields.includes('translations.languages_code')) {
     adjustedFields.push('translations.languages_code');
   }
-  
-  
+
   return adjustedFields;
 });
 
 // Get all fields including aliased ones - currently unused
-
 
 // Table headers with relational field support
 // Helper function to get translation field metadata
 function getTranslationFieldMetadata(fieldKey: string) {
   if (fieldKey.startsWith('translations.')) {
     const subFieldName = fieldKey.split('.')[1];
-    
-    
+
     // Find the translations relation
     const relationsForField = relationsStore.getRelationsForField(collection.value, 'translations');
-    
+
     if (relationsForField && relationsForField.length > 0) {
       const relation = relationsForField[0];
       // For O2M translations, the related collection contains the field definitions
       const translationsCollection = relation.related_collection || relation.collection;
-      
+
       if (translationsCollection) {
         // Get field metadata from the translations collection
         const translationField = fieldsStore.getField(translationsCollection, subFieldName);
@@ -508,16 +484,16 @@ function getTranslationFieldMetadata(fieldKey: string) {
         }
       }
     }
-    
+
     // Fallback: Common translation field types
     const commonTranslationFields: Record<string, any> = {
-      'description': { type: 'text', meta: { interface: 'input-rich-text-html' } },
-      'content': { type: 'text', meta: { interface: 'input-rich-text-html' } },
-      'title': { type: 'string', meta: { interface: 'input' } },
-      'name': { type: 'string', meta: { interface: 'input' } },
-      'subtitle': { type: 'string', meta: { interface: 'input' } },
+      description: { type: 'text', meta: { interface: 'input-rich-text-html' } },
+      content: { type: 'text', meta: { interface: 'input-rich-text-html' } },
+      title: { type: 'string', meta: { interface: 'input' } },
+      name: { type: 'string', meta: { interface: 'input' } },
+      subtitle: { type: 'string', meta: { interface: 'input' } },
     };
-    
+
     return commonTranslationFields[subFieldName] || null;
   }
   return null;
@@ -529,13 +505,13 @@ const tableHeaders = computed(() => {
       // Check if field has language suffix (e.g., "translations.description:de-DE")
       let actualFieldKey = key;
       let languageCode = null;
-      
+
       if (key.includes(':')) {
         [actualFieldKey, languageCode] = key.split(':');
       }
-      
+
       let fieldData = fieldsStore.getField(collection.value, actualFieldKey);
-      
+
       // Special handling for translation fields
       if (actualFieldKey.startsWith('translations.') && !fieldData) {
         const translationField = getTranslationFieldMetadata(actualFieldKey);
@@ -547,7 +523,7 @@ const tableHeaders = computed(() => {
           };
         }
       }
-      
+
       // Add language code to field data if present
       if (fieldData && languageCode) {
         fieldData = {
@@ -556,7 +532,7 @@ const tableHeaders = computed(() => {
           languageCode,
         };
       }
-      
+
       return fieldData ? { ...fieldData, key } : null;
     })
     .filter(Boolean);
@@ -564,10 +540,10 @@ const tableHeaders = computed(() => {
   return activeFields.map((field: any) => {
     let description: string | null = null;
     let headerText = customFieldNames.value[field.key] || field.name || formatTitle(field.field);
-    
+
     // Add language to header if present
     if (field.languageCode) {
-      const language = languages.value.find(l => l.code === field.languageCode);
+      const language = languages.value.find((l) => l.code === field.languageCode);
       const langName = language?.name || field.languageCode;
       headerText = `${headerText} (${langName})`;
     }
@@ -590,8 +566,10 @@ const tableHeaders = computed(() => {
     // Determine if field is sortable
     // Translation fields are sortable (they're text fields in the related table)
     const isTranslationField = actualKey.startsWith('translations.');
-    const isSortable = isTranslationField ? true : !['json', 'alias', 'presentation', 'translations'].includes(field.type);
-    
+    const isSortable = isTranslationField
+      ? true
+      : !['json', 'alias', 'presentation', 'translations'].includes(field.type);
+
     return {
       text: headerText,
       value: field.key,
@@ -618,33 +596,37 @@ const tableHeadersWritable = computed({
   set: (val) => {
     const widths: Record<string, number> = {};
     const newFields: string[] = [];
-    
+
     val.forEach((header: any) => {
       if (header.width) {
         widths[header.value] = header.width;
       }
       newFields.push(header.value);
     });
-    
+
     layoutOptions.value = {
       ...layoutOptions.value,
       widths,
     };
-    
+
     fields.value = newFields;
-  }
+  },
 });
 
 // Check if we have image fields
 const hasImageFields = computed(() => {
-  return fields.value?.some((field: string) => {
-    const fieldObj = fieldsInCollection.value?.find(f => f.field === field);
-    return fieldObj?.meta?.interface === 'file-image' || 
-           fieldObj?.meta?.interface === 'file' ||
-           fieldObj?.meta?.interface === 'image' ||
-           field.includes('image') ||
-           field.includes('photo');
-  }) || false;
+  return (
+    fields.value?.some((field: string) => {
+      const fieldObj = fieldsInCollection.value?.find((f) => f.field === field);
+      return (
+        fieldObj?.meta?.interface === 'file-image' ||
+        fieldObj?.meta?.interface === 'file' ||
+        fieldObj?.meta?.interface === 'image' ||
+        field.includes('image') ||
+        field.includes('photo')
+      );
+    }) || false
+  );
 });
 
 // Row height - dynamic for image fields, fixed for others
@@ -661,7 +643,7 @@ const editMode = computed({
       ...layoutOptions.value,
       editMode: val,
     };
-  }
+  },
 });
 
 // Search
@@ -673,44 +655,44 @@ const onSearchInput = debounce((val: string) => {
 // Build search filter for all fields including translations
 function buildSearchFilter(query: string) {
   if (!query || query.trim() === '') return null;
-  
+
   const searchValue = query.trim();
   const conditions: any[] = [];
   const processedFields = new Set<string>(); // Track processed fields to avoid duplicates
-  
+
   // Helper function to check if a string is a valid UUID
   const isValidUUID = (str: string) => {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     return uuidRegex.test(str);
   };
-  
+
   // Helper function to check if a string is a valid integer
   const isValidInteger = (str: string) => {
     return /^\d+$/.test(str);
   };
-  
+
   // Check if the search value is a valid UUID or integer
   const searchIsUUID = isValidUUID(searchValue);
   const searchIsInteger = isValidInteger(searchValue);
   const searchAsInteger = searchIsInteger ? parseInt(searchValue, 10) : null;
-  
+
   // Process each visible field
   fields.value.forEach((fieldKey: string) => {
     // Remove language suffix if present (e.g., "translations.description:de-DE" -> "translations.description")
     const actualFieldKey = fieldKey.includes(':') ? fieldKey.split(':')[0] : fieldKey;
-    
+
     // Skip if we've already processed this field (prevents duplicates from multi-language fields)
     if (processedFields.has(actualFieldKey)) {
       return;
     }
     processedFields.add(actualFieldKey);
-    
+
     if (actualFieldKey.includes('.')) {
       // Handle relational fields
       const parts = actualFieldKey.split('.');
       const rootField = parts[0];
       const nestedField = parts.slice(1).join('.');
-      
+
       if (rootField === 'translations') {
         // For translations, always search in ALL languages
         // This ensures users can find content regardless of the displayed language
@@ -718,79 +700,79 @@ function buildSearchFilter(query: string) {
           translations: {
             _some: {
               [nestedField]: {
-                _icontains: searchValue
-              }
-            }
-          }
+                _icontains: searchValue,
+              },
+            },
+          },
         });
       } else {
         // Other relational fields
         conditions.push({
           [actualFieldKey]: {
-            _icontains: searchValue
-          }
+            _icontains: searchValue,
+          },
         });
       }
     } else {
       // Direct fields - check if it's a searchable type
       const field = fieldsStore.getField(collection.value, actualFieldKey);
       const searchableTypes = ['string', 'text'];
-      
+
       if (field && searchableTypes.includes(field.type)) {
         conditions.push({
           [actualFieldKey]: {
-            _icontains: searchValue
-          }
+            _icontains: searchValue,
+          },
         });
       } else if (field && field.type === 'uuid' && searchIsUUID) {
         // For UUID fields, use _eq if the search value is a complete valid UUID
         conditions.push({
           [actualFieldKey]: {
-            _eq: searchValue
-          }
+            _eq: searchValue,
+          },
         });
       } else if (field && field.type === 'integer' && searchIsInteger) {
         // For integer fields (including ID), use _eq if the search value is a valid integer
         conditions.push({
           [actualFieldKey]: {
-            _eq: searchAsInteger
-          }
+            _eq: searchAsInteger,
+          },
         });
       }
       // Note: UUID fields only support _eq, _neq, _in, _nin comparisons
       // Integer fields support exact match with _eq when searching by number
     }
   });
-  
+
   // If no searchable fields, fallback to all string/text/uuid/integer fields
   if (conditions.length === 0) {
     fieldsInCollection.value.forEach((field: Field) => {
       const searchableTypes = ['string', 'text'];
-      
+
       if (searchableTypes.includes(field.type) && !field.meta?.hidden) {
         conditions.push({
           [field.field]: {
-            _icontains: searchValue
-          }
+            _icontains: searchValue,
+          },
         });
       } else if (field.type === 'uuid' && !field.meta?.hidden && searchIsUUID) {
         // Add UUID fields to search if we have a valid UUID
         conditions.push({
           [field.field]: {
-            _eq: searchValue
-          }
+            _eq: searchValue,
+          },
         });
       } else if (field.type === 'integer' && !field.meta?.hidden && searchIsInteger) {
         // Add integer fields (including ID) to search if we have a valid integer
         conditions.push({
           [field.field]: {
-            _eq: searchAsInteger
-          }
+            _eq: searchAsInteger,
+          },
         });
       }
     });
   }
-  
+
   return conditions.length > 0 ? { _or: conditions } : null;
 }
 
@@ -802,35 +784,34 @@ const searchFilter = computed(() => {
 // Build deep parameter for relational fields
 const deep = computed(() => {
   const deepFields: Record<string, any> = {};
-  
+
   fields.value.forEach((field: string) => {
     // Remove language suffix if present
     const actualField = field.includes(':') ? field.split(':')[0] : field;
-    
+
     if (actualField.includes('.')) {
       const parts = actualField.split('.');
       const rootField = parts[0];
-      
+
       // For translations, we fetch all and filter client-side
       if (rootField === 'translations') {
         if (!deepFields[rootField]) {
           deepFields[rootField] = {
             _fields: ['*'], // Get all fields including languages_code
-            _limit: -1      // Get all translations for client-side filtering
+            _limit: -1, // Get all translations for client-side filtering
           };
         }
       } else {
         // For other relations
         if (!deepFields[rootField]) {
           deepFields[rootField] = {
-            _fields: ['*']
+            _fields: ['*'],
           };
         }
       }
     }
   });
-  
-  
+
   return Object.keys(deepFields).length > 0 ? deepFields : undefined;
 });
 
@@ -845,32 +826,34 @@ const {
   togglePreset: toggleFilterPreset,
   movePreset: moveFilterPreset,
   updatePreset: updateFilterPreset,
-  updateManualFilters
-} = useFilterPresets(collection, layoutOptions as any, (event: string, ...args: any[]) => (emit as any)(event, ...args));
+  updateManualFilters,
+} = useFilterPresets(collection, layoutOptions as any, (event: string, ...args: any[]) =>
+  (emit as any)(event, ...args)
+);
 
 // Handle quick filter saved event
 async function handleQuickFilterSaved(event: any) {
   const { filterId, activateFilter, clearNativeFilter } = event.detail || {};
-  
+
   // Reload presets to get the new filter
   await loadPresets();
-  
+
   if (activateFilter && filterId) {
     // Find the new preset
-    const newPreset = filterPresets.value.find(p => p.id === filterId);
+    const newPreset = filterPresets.value.find((p) => p.id === filterId);
     if (newPreset) {
       // Activate the new filter
       toggleFilterPreset(newPreset);
     }
   }
-  
+
   // Note: We CANNOT clear the native filter panel due to Directus 11 architecture limitations
   // The native filter will remain visible, but our Quick Filter will still work correctly
   if (clearNativeFilter) {
     // Simply show a success message - the Quick Filter is active even if native filter remains visible
     notificationsStore.add({
       title: 'Quick Filter Saved & Activated',
-      text: `"${filterPresets.value.find(p => p.id === filterId)?.name}" is now active. You can manually clear the native filter if needed.`,
+      text: `"${filterPresets.value.find((p) => p.id === filterId)?.name}" is now active. You can manually clear the native filter if needed.`,
       type: 'success',
     });
   }
@@ -880,10 +863,10 @@ async function handleQuickFilterSaved(event: any) {
 onMounted(() => {
   // Load presets from layoutOptions (no localStorage needed)
   loadPresets();
-  
+
   // Load initial items
   getItems();
-  
+
   // Listen for save events from actions
   window.addEventListener('quick-filter-saved', handleQuickFilterSaved);
 });
@@ -893,26 +876,30 @@ onUnmounted(() => {
 });
 
 // Update manual filters when props.filter changes (from native filter interface)
-watch(() => props.filter, (newFilter) => {
-  updateManualFilters(newFilter);
-}, { immediate: true, deep: true });
+watch(
+  () => props.filter,
+  (newFilter) => {
+    updateManualFilters(newFilter);
+  },
+  { immediate: true, deep: true }
+);
 
 // Combine all filters: presets + manual + search
 const combinedFilter = computed(() => {
   const presetFilter = presetMergedFilters.value;
   const searchFilterValue = searchFilter.value;
-  
+
   const filters = [];
-  
+
   if (presetFilter) filters.push(presetFilter);
   if (searchFilterValue) filters.push(searchFilterValue);
-  
+
   if (filters.length === 0) return undefined;
   if (filters.length === 1) return filters[0];
-  
+
   // Combine all filters with AND logic
   return {
-    _and: filters
+    _and: filters,
   };
 });
 
@@ -941,9 +928,9 @@ async function getItems() {
       page: page.value,
       limit: limit.value,
       deep: deep.value,
-      alias: aliasQuery.value || undefined
+      alias: aliasQuery.value || undefined,
     });
-  } catch (err) {
+  } catch {
     // Error is handled by tableApi internally
   }
 }
@@ -953,48 +940,56 @@ async function refreshItems() {
   await getItems();
 }
 
-
 // Watch for refresh prop calls
-watch(() => props.refresh, (newVal) => {
-  if (newVal) {
-    refreshItems();
+watch(
+  () => props.refresh,
+  (newVal) => {
+    if (newVal) {
+      refreshItems();
+    }
   }
-});
+);
 
 // Watch for query parameter changes
-watch([combinedFilter, sort, page, limit, fieldsWithRelational], () => {
-  getItems();
-}, { deep: true });
+watch(
+  [combinedFilter, sort, page, limit, fieldsWithRelational],
+  () => {
+    getItems();
+  },
+  { deep: true }
+);
 
-watch(() => props.resetPresetAndRefresh, (newVal) => {
-  if (newVal) {
-    refreshItems();
+watch(
+  () => props.resetPresetAndRefresh,
+  (newVal) => {
+    if (newVal) {
+      refreshItems();
+    }
   }
-});
+);
 
 // Handle select all toggle
 function onToggleSelectAll() {
   if (items.value && items.value.length > 0) {
     const allSelected = selection.value?.length === items.value.length;
-    
+
     if (allSelected) {
       // Deselect all
       selection.value = [];
     } else {
       // Select all - use keys since we have selection-use-keys
-      selection.value = items.value.map(item => item[primaryKeyField.value?.field || 'id']);
+      selection.value = items.value.map((item) => item[primaryKeyField.value?.field || 'id']);
     }
   }
 }
 
 // Edits tracking
-const { 
-  edits, 
-  savingCells, 
-  updateFieldValue, 
-  autoSaveEdits
-} = useTableEdits(collection, ref(primaryKeyField.value || undefined), items, getItems);
-
+const { edits, savingCells, updateFieldValue, autoSaveEdits } = useTableEdits(
+  collection,
+  ref(primaryKeyField.value || undefined),
+  items,
+  getItems
+);
 
 // Field management
 const {
@@ -1011,16 +1006,26 @@ const {
   cancelRename,
   cancelLanguageSelection,
   confirmLanguageSelection,
-  removeField
-} = useTableFields(fields as Ref<string[]>, ref(fieldsInCollection.value), collection, fieldsStore, relationsStore, layoutOptions as any);
+  removeField,
+} = useTableFields(
+  fields as Ref<string[]>,
+  ref(fieldsInCollection.value),
+  collection,
+  fieldsStore,
+  relationsStore,
+  layoutOptions as any
+);
 
 // Fetch languages when we have translation fields
-watch(hasTranslationFields, (hasTranslations) => {
-  if (hasTranslations) {
-    fetchLanguages();
-  }
-}, { immediate: true });
-
+watch(
+  hasTranslationFields,
+  (hasTranslations) => {
+    if (hasTranslations) {
+      fetchLanguages();
+    }
+  },
+  { immediate: true }
+);
 
 // Filter removal handlers - currently unused
 // function removeFilter(filter: any) {
@@ -1035,23 +1040,20 @@ watch(hasTranslationFields, (hasTranslations) => {
 // async function clearAllFilters() {
 //   // Clear our preset filters
 //   clearAllPresetFilters();
-//   
+//
 //   // Clear search
 //   searchQuery.value = '';
-//   
+//
 //   // Clear native filter interface by updating URL
 //   await clearNativeFilter();
 // }
-
-
-
 
 // Selection
 const selectionWritable = computed({
   get: () => selection.value || [],
   set: (val) => {
     selection.value = val;
-  }
+  },
 });
 
 // Methods
@@ -1062,7 +1064,7 @@ function onAlignChange(field: string, align: 'left' | 'center' | 'right') {
     align: {
       ...(layoutOptions.value?.align || {}),
       [field]: align,
-    }
+    },
   };
 }
 
@@ -1071,17 +1073,17 @@ async function handleAddField(fieldKey: string) {
   if (fieldKey.startsWith('translations.')) {
     // Ensure languages are loaded
     await fetchLanguages();
-    
+
     // Get field metadata
     const field = fieldsStore.getField(collection.value, fieldKey);
     pendingTranslationField.value = {
       key: fieldKey,
-      name: field?.name || fieldKey.split('.').pop()
+      name: field?.name || fieldKey.split('.').pop(),
     };
-    
+
     // Reset selection
     selectedLanguagesForField.value = [];
-    
+
     // Show language selection dialog
     showLanguageDialog.value = true;
   } else {
@@ -1107,7 +1109,7 @@ function editItem(item: Item) {
 
 function handleRowClick(event: MouseEvent, item: Item) {
   const target = event.target as HTMLElement;
-  
+
   // Don't navigate if:
   // - A button/icon was clicked
   // - An input/editor is active
@@ -1125,11 +1127,10 @@ function handleRowClick(event: MouseEvent, item: Item) {
   ) {
     return;
   }
-  
+
   // Navigate to detail page
   editItem(item);
 }
-
 
 // Watch for search changes
 watch(searchQuery, (val) => {
@@ -1144,11 +1145,11 @@ function handleItemsDuplicated() {
   selection.value = [];
 }
 
-// Handle items deleted event - currently unused 
+// Handle items deleted event - currently unused
 // async function handleItemsDeleted(deletedIds?: any[]) {
 //   // Clear selection
 //   selection.value = [];
-//   
+//
 //   // Refresh from server
 //   await getItems();
 // }
@@ -1156,10 +1157,10 @@ function handleItemsDuplicated() {
 // Setup event listeners for cross-component communication
 onMounted(() => {
   window.addEventListener('directus-items-duplicated', handleItemsDuplicated);
-  
+
   // Listen for Directus core delete events
   window.addEventListener('items-deleted', () => refreshItems());
-  
+
   // Listen for collection refresh events
   window.addEventListener('refresh-collection', (event: any) => {
     if (event.detail?.collection === collection.value) {
@@ -1361,7 +1362,6 @@ v-icon.edit-toggle:hover {
 v-icon.edit-toggle.active {
   color: var(--primary);
 }
-
 
 .no-data {
   display: flex;

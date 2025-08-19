@@ -2,12 +2,7 @@
 <template>
   <div class="image-cell">
     <div v-if="imageSrc" class="image-wrapper">
-      <img 
-        :src="imageSrc" 
-        :alt="alt || 'Preview'" 
-        class="preview-image"
-        @error="onImageError"
-      />
+      <img :src="imageSrc" :alt="alt || 'Preview'" class="preview-image" @error="onImageError" />
     </div>
     <span v-else class="image-empty">—</span>
   </div>
@@ -22,8 +17,8 @@ interface ImageValue {
   title?: string;
 }
 
-const props = defineProps<{ 
-  value?: string | ImageValue | null; 
+const props = defineProps<{
+  value?: string | ImageValue | null;
   item?: any;
   field?: string;
 }>();
@@ -32,17 +27,17 @@ const imageError = ref(false);
 
 const imageSrc = computed(() => {
   if (!props.value || imageError.value) return null;
-  
+
   // If value is a string (file ID)
   if (typeof props.value === 'string') {
     return `/assets/${props.value}?key=system-medium-contain`;
   }
-  
+
   // If value is a file object
   if (typeof props.value === 'object' && props.value.id) {
     return `/assets/${props.value.id}?key=system-medium-contain`;
   }
-  
+
   return null;
 });
 

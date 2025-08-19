@@ -3,25 +3,23 @@
   <div class="relational-cell">
     <!-- Many-to-Many or One-to-Many (Array) -->
     <div v-if="isMultiple" class="relation-list">
-      <span 
-        v-for="(item, index) in displayItems" 
+      <span
+        v-for="(item, index) in displayItems"
         :key="getItemKey(item, index)"
         class="relation-item"
       >
         {{ formatItem(item) }}
       </span>
-      <span v-if="hasMore" class="relation-more">
-        +{{ remainingCount }} more
-      </span>
+      <span v-if="hasMore" class="relation-more"> +{{ remainingCount }} more </span>
     </div>
-    
+
     <!-- Many-to-One or Single item -->
     <div v-else-if="singleItem" class="relation-single">
       <span class="relation-item">
         {{ formatItem(singleItem) }}
       </span>
     </div>
-    
+
     <!-- Empty state -->
     <span v-else class="relation-empty">—</span>
   </div>
@@ -30,8 +28,8 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
 
-const props = defineProps<{ 
-  value: any; 
+const props = defineProps<{
+  value: any;
   field?: string;
   item?: any;
   options?: Record<string, any>;
@@ -41,7 +39,7 @@ const isMultiple = computed(() => Array.isArray(props.value));
 
 const displayItems = computed(() => {
   if (!isMultiple.value) return [];
-  
+
   // Show maximum 3 items in the cell
   return props.value.slice(0, 3);
 });
@@ -60,32 +58,32 @@ const singleItem = computed(() => {
 
 function formatItem(item: any): string {
   if (!item) return '';
-  
+
   // If it's a string or number, return as is
   if (typeof item === 'string' || typeof item === 'number') {
     return String(item);
   }
-  
+
   // If it's an object, try to find a display field
   if (typeof item === 'object') {
     // Common display fields in order of preference
     const displayFields = ['name', 'title', 'label', 'first_name', 'email', 'id'];
-    
+
     for (const field of displayFields) {
       if (item[field] != null) {
         return String(item[field]);
       }
     }
-    
+
     // If it has first_name and last_name, combine them
     if (item.first_name && item.last_name) {
       return `${item.first_name} ${item.last_name}`;
     }
-    
+
     // Fallback to id if available
     return item.id ? String(item.id) : 'Unknown';
   }
-  
+
   return String(item);
 }
 

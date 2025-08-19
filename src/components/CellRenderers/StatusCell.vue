@@ -1,7 +1,11 @@
 <!-- ./extensions/layouts/super-layout-table/components/CellRenderers/StatusCell.vue -->
 <template>
-  <div class="status-cell" :class="{ 'in-edit-mode': editMode }" :style="{ justifyContent: cellAlignment }">
-    <div 
+  <div
+    class="status-cell"
+    :class="{ 'in-edit-mode': editMode }"
+    :style="{ justifyContent: cellAlignment }"
+  >
+    <div
       v-tooltip="statusText"
       class="status-dot"
       :class="`status-dot--${value}`"
@@ -23,9 +27,9 @@ interface Choice {
   color?: string;
 }
 
-const props = defineProps<{ 
-  value: string | number | null; 
-  options?: Record<string, any>; 
+const props = defineProps<{
+  value: string | number | null;
+  options?: Record<string, any>;
   field?: string;
   editMode?: boolean;
   align?: string;
@@ -33,18 +37,18 @@ const props = defineProps<{
 
 const currentChoice = computed<Choice | null>(() => {
   if (props.value == null || !props.options?.choices) return null;
-  
+
   return props.options.choices.find((c: Choice) => c.value === props.value) || null;
 });
 
 const statusText = computed(() => {
   if (props.value == null) return '—';
-  
+
   // Get text from choices if available
   if (currentChoice.value) {
     return currentChoice.value.text || currentChoice.value.label || String(props.value);
   }
-  
+
   // Fallback to value with first letter capitalized
   const text = String(props.value);
   return text.charAt(0).toUpperCase() + text.slice(1);
@@ -52,16 +56,16 @@ const statusText = computed(() => {
 
 const dotStyle = computed(() => {
   if (!currentChoice.value?.color) return {};
-  
+
   const color = currentChoice.value.color;
   const isVariable = color.startsWith('var(') || color.startsWith('--');
-  
+
   if (isVariable) {
     return {
       backgroundColor: color,
     };
   }
-  
+
   const hexColor = color.startsWith('#') ? color : `#${color}`;
   return {
     backgroundColor: hexColor,
@@ -73,7 +77,7 @@ const cellAlignment = computed(() => {
   if (props.align === 'center') return 'center';
   if (props.align === 'right') return 'flex-end';
   if (props.align === 'left') return 'flex-start';
-  
+
   // Default: left alignment
   return 'flex-start';
 });

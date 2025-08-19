@@ -1,9 +1,13 @@
 <template>
-  <v-dialog :model-value="modelValue" @update:model-value="$emit('update:modelValue', $event)" @esc="$emit('cancel')">
+  <v-dialog
+    :model-value="modelValue"
+    @update:model-value="$emit('update:modelValue', $event)"
+    @esc="$emit('cancel')"
+  >
     <v-card>
       <v-card-title>{{ t('Select Languages') }}</v-card-title>
       <v-card-text>
-        <p style="margin-bottom: 16px;">
+        <p style="margin-bottom: 16px">
           {{ t('Select which languages to display for') }} "{{ fieldName }}"
         </p>
         <v-checkbox
@@ -12,9 +16,9 @@
           :model-value="selectedLanguages.includes(lang.value)"
           @update:model-value="toggleLanguage(lang.value, $event)"
           :label="lang.text"
-          style="margin-bottom: 8px;"
+          style="margin-bottom: 8px"
         />
-        <v-divider style="margin: 16px 0;" />
+        <v-divider style="margin: 16px 0" />
         <v-checkbox
           :model-value="selectAll"
           label="Select All Languages"
@@ -47,8 +51,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:modelValue': [value: boolean];
   'update:selectedLanguages': [value: string[]];
-  'confirm': [];
-  'cancel': [];
+  confirm: [];
+  cancel: [];
 }>();
 
 const { t } = useI18n();
@@ -70,7 +74,10 @@ function toggleLanguage(langCode: string, selected: boolean) {
 
 function toggleAll(value: boolean) {
   if (value) {
-    emit('update:selectedLanguages', props.languages.map(l => l.value));
+    emit(
+      'update:selectedLanguages',
+      props.languages.map((l) => l.value)
+    );
   } else {
     emit('update:selectedLanguages', []);
   }

@@ -296,7 +296,7 @@ export function useTableApi() {
         },
       });
       return response.data?.data;
-    } catch (err) {
+    } catch {
       // Try alternative endpoint
       try {
         const response = await api.get(`/items/directus_files/${fileId}`, {
@@ -492,7 +492,7 @@ export function useTableApi() {
 
           try {
             await api.post(`/items/${collection}_translations`, translationData);
-          } catch (err) {
+          } catch {
             // Failed to duplicate translation
           }
         }
