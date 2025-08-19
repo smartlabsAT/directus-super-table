@@ -98,7 +98,7 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
 import type { Field, Item } from '@directus/types';
-import InlineEditPopover from '../src/components/InlineEditPopover.vue';
+import InlineEditPopover from './InlineEditPopover.vue';
 import SelectCell from './CellRenderers/SelectCell.vue';
 import StatusCell from './CellRenderers/StatusCell.vue';
 import ImageCell from './CellRenderers/ImageCell.vue';

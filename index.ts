@@ -1,5 +1,5 @@
 import { defineLayout } from '@directus/extensions-sdk';
-import LayoutComponent from './super-layout-table.vue';
+import LayoutComponent from './src/super-table.vue';
 import ActionsComponent from './src/actions.vue';
 
 export default defineLayout({
