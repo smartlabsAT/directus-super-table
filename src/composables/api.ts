@@ -475,7 +475,7 @@ export function useTableApi() {
           try {
             await api.post(`/items/${collection}_translations`, translationData);
           } catch (err) {
-            console.warn('Failed to duplicate translation:', err);
+            // Failed to duplicate translation
           }
         }
       }

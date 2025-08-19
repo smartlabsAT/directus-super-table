@@ -193,7 +193,7 @@ export function useFilterPresets(
         user: userStore.currentUser?.id
       });
     } catch (error) {
-      console.warn('Failed to save preset to API (will be saved with layout):', error);
+      // Failed to save preset to API (will be saved with layout)
     }
   }
   

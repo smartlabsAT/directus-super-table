@@ -107,7 +107,7 @@ export function useTableEdits(
       // Refresh the item data
       await getItems();
     } catch (error) {
-      console.error('Failed to save edits:', error);
+      // Failed to save edits
     } finally {
       // Clear saving state
       for (const field of Object.keys(changes)) {

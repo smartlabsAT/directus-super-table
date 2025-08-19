@@ -6,3 +6,5 @@ claude.md
 /screenshots/
 /.idea/
 /.claude/
+.DS_Store
+**/.DS_Store

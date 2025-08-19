@@ -422,11 +422,8 @@ function savePreset() {
 }
 
 function deletePreset(preset: FilterPreset) {
-  console.log('[QuickFilters] deletePreset called with:', preset);
-  console.log('[QuickFilters] Setting presetToDelete and opening dialog');
   presetToDelete.value = preset;
   deleteDialogActive.value = true;
-  console.log('[QuickFilters] deleteDialogActive is now:', deleteDialogActive.value);
 }
 
 function confirmDelete() {

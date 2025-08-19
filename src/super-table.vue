@@ -46,8 +46,6 @@
         {{ selection.length }} {{ selection.length === 1 ? 'item' : 'items' }} selected
       </div>
     </div>
-    
-
     <!-- Main Table -->
     <v-table
       v-if="loading || (itemCount && itemCount > 0 && !error)"
@@ -924,7 +922,7 @@ async function getItems() {
       alias: aliasQuery.value
     });
   } catch (err) {
-    console.error('Failed to fetch items:', err);
+    // Error is handled by tableApi internally
   }
 }
 
@@ -933,10 +931,6 @@ async function refreshItems() {
   await getItems();
 }
 
-// Manual sort is not supported with the new API approach
-const changeManualSort = () => {
-  console.warn('Manual sort not implemented with tableApi');
-};
 
 // Watch for refresh prop calls
 watch(() => props.refresh, (newVal) => {
@@ -1011,8 +1005,6 @@ watch(hasTranslationFields, (hasTranslations) => {
   }
 }, { immediate: true });
 
-// Initialize before using in useItems
-const saving = ref(false);
 
 // Filter removal handlers
 function removeFilter(filter: any) {
@@ -1125,14 +1117,6 @@ function addField(fieldKey: string) {
     fields.value = [...fields.value, fieldKey];
   }
 }
-
-
-
-
-
-
-
-
 // Pagination navigation
 function toPage(newPage: number) {
   page.value = newPage;

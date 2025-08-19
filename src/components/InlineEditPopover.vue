@@ -823,8 +823,6 @@ async function navigateToSelectedFile() {
 			// Get the file details to find its folder
 			const fileData = await tableApi.fetchFile(selectedFileId.value);
 			
-			console.log('File data:', fileData);
-			console.log('File folder data:', fileData?.folder);
 			
 			if (fileData?.folder) {
 				// Extract folder info
@@ -835,7 +833,6 @@ async function navigateToSelectedFile() {
 					folderInfo = fileData.folder;
 					// The folder object should now have an 'id' field
 					folderId = folderInfo.id;
-					console.log('Extracted folderId:', folderId, 'from folderInfo:', folderInfo);
 				} else if (typeof fileData.folder === 'string') {
 					// If it's just an ID string
 					folderId = fileData.folder;
@@ -844,7 +841,7 @@ async function navigateToSelectedFile() {
 						const folderData = await tableApi.fetchFolder(folderId);
 						folderInfo = folderData?.folder || { id: folderId, name: 'Folder' };
 					} catch (e) {
-						console.error('Could not fetch folder details:', e);
+						// Could not fetch folder details
 						folderInfo = { id: folderId, name: 'Folder' };
 					}
 				}
@@ -877,18 +874,14 @@ async function navigateToSelectedFile() {
 					});
 					
 					folderPath.value = path;
-					console.log(`Setting currentFolder to: ${folderId}`);
-					console.log(`Navigated to folder: ${folderName} (ID: ${folderId})`);
-					console.log('Full path:', path.map(p => p.name).join(' > '));
 				}
 			} else {
 				// File is in root folder
-				console.log('File is in root folder (no folder property)');
 				currentFolder.value = null;
 				folderPath.value = [];
 			}
 		} catch (error) {
-			console.error('Error getting file folder:', error);
+			// Error getting file folder
 			// Fallback to root folder
 			currentFolder.value = null;
 			folderPath.value = [];
@@ -905,7 +898,6 @@ async function navigateToSelectedFile() {
 
 async function loadFiles() {
 	filesLoading.value = true;
-	console.log('Starting to load files and folders...');
 	
 	try {
 		// Load files and folders using tableApi
@@ -926,10 +918,9 @@ async function loadFiles() {
 		
 		availableFolders.value = result.folders || [];
 		
-		console.log(`Loaded ${availableFiles.value.length} files and ${availableFolders.value.length} folders`);
 		
 	} catch (error: any) {
-		console.error('Failed to load files:', error);
+		// Failed to load files
 		availableFiles.value = [];
 		availableFolders.value = [];
 	} finally {
@@ -938,7 +929,6 @@ async function loadFiles() {
 }
 
 async function navigateToFolder(folderId: string | null) {
-	console.log('Navigating to folder:', folderId);
 	
 	// Update current folder
 	currentFolder.value = folderId;
@@ -953,7 +943,7 @@ async function navigateToFolder(folderId: string | null) {
 			const folderData = await tableApi.fetchFolder(folderId);
 			folderPath.value = folderData.breadcrumb || [];
 		} catch (e) {
-			console.error('Failed to load folder path:', e);
+			// Failed to load folder path
 			// Still navigate even if we can't build the path
 			folderPath.value = [{ id: folderId, name: 'Current Folder' }];
 		}

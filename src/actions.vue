@@ -307,7 +307,7 @@ async function saveFilter() {
         }
       });
     } catch (apiError) {
-      console.warn('Failed to save to presets API (saved in layout):', apiError);
+      // Failed to save to presets API (saved in layout)
     }
     
     notificationsStore.add({
@@ -386,7 +386,7 @@ async function duplicateSelectedItems() {
       }
     }));
   } catch (error: any) {
-    console.error('Error duplicating items:', error);
+    // Error duplicating items
     throw error;
   }
 }
