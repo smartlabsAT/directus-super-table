@@ -147,7 +147,7 @@
 							}"
 							:primary-key="'+'"
 							:disabled="false"
-							@input="(val) => { 
+							@input="(val: any) => { 
  
 								localValue = val; 
 								debouncedSave(val); 
@@ -537,65 +537,68 @@ const isImageField = computed(() => {
 	return iface === 'file-image' || iface === 'image';
 });
 
-const fieldOptions = computed(() => {
-	return props.interfaceOptions || {};
-});
+// Field options - currently unused
+// const fieldOptions = computed(() => {
+// 	return props.interfaceOptions || {};
+// });
 
-const selectOptions = computed(() => {
-	const options = props.interfaceOptions?.choices || [];
-	
-	return options.map((opt: any) => ({
-		text: opt.text || opt.label || opt,
-		value: opt.value || opt,
-		icon: opt.icon,
-		color: opt.color
-	}));
-});
+// Select options - currently unused  
+// const selectOptions = computed(() => {
+// 	const options = props.interfaceOptions?.choices || [];
+// 	
+// 	return options.map((opt: any) => ({
+// 		text: opt.text || opt.label || opt,
+// 		value: opt.value || opt,
+// 		icon: opt.icon,
+// 		color: opt.color
+// 	}));
+// });
 
-const selectedChoice = computed(() => {
-	if (localValue.value == null) return null;
-	return selectOptions.value.find((item: any) => item.value === localValue.value) || null;
-});
+// Selected choice - currently unused
+// const selectedChoice = computed(() => {
+// 	if (localValue.value == null) return null;
+// 	return selectOptions.value.find((item: any) => item.value === localValue.value) || null;
+// });
 
 
-// Get style for dropdown option
-function getOptionStyle(item: any): Record<string, string> {
-	if (!item?.color) return {};
-	
-	const color = item.color;
-	if (!color || typeof color !== 'string') return {};
-	
-	const isVariable = color.startsWith('var(') || color.startsWith('--');
-	
-	return {
-		'--option-color': isVariable ? color : (color.startsWith('#') ? color : `#${color}`),
-	};
-}
+// Get style for dropdown option - currently unused
+// function getOptionStyle(item: any): Record<string, string> {
+// 	if (!item?.color) return {};
+// 	
+// 	const color = item.color;
+// 	if (!color || typeof color !== 'string') return {};
+// 	
+// 	const isVariable = color.startsWith('var(') || color.startsWith('--');
+// 	
+// 	return {
+// 		'--option-color': isVariable ? color : (color.startsWith('#') ? color : `#${color}`),
+// 	};
+// }
 
-// Get style for selected value
-function getSelectedStyle(choice: any): Record<string, string> {
-	if (!choice?.color) return {};
-	
-	const color = choice.color;
-	if (!color || typeof color !== 'string') return {};
-	
-	const isVariable = color.startsWith('var(') || color.startsWith('--');
-	
-	return {
-		'--choice-color': isVariable ? color : (color.startsWith('#') ? color : `#${color}`),
-	};
-}
+// Get style for selected value - currently unused
+// function getSelectedStyle(choice: any): Record<string, string> {
+// 	if (!choice?.color) return {};
+// 	
+// 	const color = choice.color;
+// 	if (!color || typeof color !== 'string') return {};
+// 	
+// 	const isVariable = color.startsWith('var(') || color.startsWith('--');
+// 	
+// 	return {
+// 		'--choice-color': isVariable ? color : (color.startsWith('#') ? color : `#${color}`),
+// 	};
+// }
 
-// Check if this is a translation field
-const isTranslationField = computed(() => {
-	return props.fieldKey?.startsWith('translations.');
-});
+// Check if this is a translation field - currently unused
+// const isTranslationField = computed(() => {
+// 	return props.fieldKey?.startsWith('translations.');
+// });
 
-// Get the actual translation field name (e.g., "description" from "translations.description")
-const translationFieldName = computed(() => {
-	if (!isTranslationField.value) return null;
-	return props.fieldKey.split('.').slice(1).join('.');
-});
+// Get the actual translation field name (e.g., "description" from "translations.description") - currently unused
+// const translationFieldName = computed(() => {
+// 	if (!isTranslationField.value) return null;
+// 	return props.fieldKey.split('.').slice(1).join('.');
+// });
 
 
 // Global popover management
@@ -803,18 +806,20 @@ function getImageUrl(fileId: string | null): string {
 	return `/assets/${fileId}?key=system-medium-contain`;
 }
 
-function getFileDisplayName(fileId: string | null): string {
-	if (!fileId) return 'No file selected';
-	// Could be enhanced to fetch actual filename from API
-	// For now, truncate UUID for display
-	return fileId.substring(0, 8) + '...';
-}
+// Get file display name - currently unused
+// function getFileDisplayName(fileId: string | null): string {
+// 	if (!fileId) return 'No file selected';
+// 	// Could be enhanced to fetch actual filename from API
+// 	// For now, truncate UUID for display
+// 	return fileId.substring(0, 8) + '...';
+// }
 
-async function openFileBrowser() {
-	showFileBrowser.value = true;
-	selectedFileId.value = localValue.value;
-	await loadFiles();
-}
+// Open file browser - currently unused
+// async function openFileBrowser() {
+// 	showFileBrowser.value = true;
+// 	selectedFileId.value = localValue.value;
+// 	await loadFiles();
+// }
 
 async function navigateToSelectedFile() {
 	// If there's a selected file, first find which folder it's in
@@ -1023,16 +1028,17 @@ watch(menuActive, (newVal) => {
 	}
 });
 
-function handleFileClear() {
-	localValue.value = null;
-	imageLoadError.value = false;
-	
-	if (props.autoSave) {
-		debouncedSave(null);
-	} else {
-		hasUnsavedChanges.value = true;
-	}
-}
+// Handle file clear - currently unused
+// function handleFileClear() {
+// 	localValue.value = null;
+// 	imageLoadError.value = false;
+// 	
+// 	if (props.autoSave) {
+// 		debouncedSave(null);
+// 	} else {
+// 		hasUnsavedChanges.value = true;
+// 	}
+// }
 
 function handleTab(event: KeyboardEvent) {
 	event.preventDefault();

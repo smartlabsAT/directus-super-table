@@ -9,9 +9,9 @@ export function useTablePagination(layoutQuery: Ref<LayoutQuery>) {
     set(newPage: number) {
       layoutQuery.value = {
         ...layoutQuery.value,
-        page: newPage
+        page: newPage,
       };
-    }
+    },
   });
 
   const limit = computed({
@@ -22,9 +22,9 @@ export function useTablePagination(layoutQuery: Ref<LayoutQuery>) {
       layoutQuery.value = {
         ...layoutQuery.value,
         limit: newLimit,
-        page: 1 // Reset to first page when changing limit
+        page: 1, // Reset to first page when changing limit
       };
-    }
+    },
   });
 
   // Available page size options
@@ -34,12 +34,12 @@ export function useTablePagination(layoutQuery: Ref<LayoutQuery>) {
     { text: '50', value: 50 },
     { text: '100', value: 100 },
     { text: '250', value: 250 },
-    { text: '500', value: 500 }
+    { text: '500', value: 500 },
   ];
 
   return {
     page,
     limit,
-    pageSizeOptions
+    pageSizeOptions,
   };
 }

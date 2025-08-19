@@ -30,7 +30,7 @@
           :collection="collection"
           :presets="filterPresets"
           :active-preset-ids="activePresetIds"
-          :current-filter="mergedFilters"
+          :current-filter="presetMergedFilters || undefined"
           :native-filter="filter"
           :can-save-filters="true"
           @toggle-preset="toggleFilterPreset"
@@ -42,8 +42,8 @@
       </div>
       
       <!-- Selection count -->
-      <div v-if="selection.length > 0" class="selection-count">
-        {{ selection.length }} {{ selection.length === 1 ? 'item' : 'items' }} selected
+      <div v-if="(selection?.value?.length || 0) > 0" class="selection-count">
+        {{ selection?.value?.length || 0 }} {{ (selection?.value?.length || 0) === 1 ? 'item' : 'items' }} selected
       </div>
     </div>
     <!-- Main Table -->
@@ -59,14 +59,14 @@
       :sort="tableSort"
       :items="items"
       :loading="loading"
-      :item-key="primaryKeyField?.field"
+      :item-key="primaryKeyField.value?.field || 'id'"
       :show-manual-sort="sortAllowed"
       :manual-sort-key="sortField?.value || null"
       allow-header-reorder
       selection-use-keys
       :row-height="tableRowHeight"
       @update:sort="onSortChange"
-      @manual-sort="changeManualSort"
+      @manual-sort="() => {}"
       @toggle-select-all="onToggleSelectAll"
     >
       <!-- Header Context Menu -->
@@ -220,9 +220,9 @@
             :item="item"
             :field-key="header.value"
             :field="header.field"
-            :edits="edits[item[primaryKeyField?.field]]?.[header.value]"
+            :edits="edits[item[primaryKeyField.value?.field || 'id']]?.[header.value]"
             :get-display-value="getFromAliasedItem"
-            :saving="savingCells[`${item[primaryKeyField?.field]}_${header.value}`]"
+            :saving="savingCells[`${item[primaryKeyField.value?.field || 'id']}_${header.value}`]"
             :edit-mode="editMode"
             :align="header.align"
             @update="updateFieldValue"
@@ -295,7 +295,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, toRefs, watch, unref, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, computed, toRefs, watch, unref, onMounted, onUnmounted, type Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { debounce } from 'lodash';
@@ -303,7 +303,6 @@ import {
   useStores,
   useCollection,
   useSync,
-  useApi,
 } from '@directus/extensions-sdk';
 import { formatTitle } from '@directus/format-title';
 import { getDefaultDisplayForType } from './utils/getDefaultDisplayForType';
@@ -320,8 +319,8 @@ import EditableCellRelational from './components/EditableCellRelational.vue';
 import RenameFieldDialog from './components/RenameFieldDialog.vue';
 import QuickFilters from './components/QuickFilters.vue';
 import LanguageSelectionDialog from './components/LanguageSelectionDialog.vue';
-import type { Field, Item, Sort } from '@directus/types';
-import type { LayoutOptions, LayoutQuery, Language, TranslationUpdate, TableHeader, Edits } from './types/table.types';
+import type { Field, Item } from '@directus/types';
+import type { LayoutOptions, LayoutQuery } from './types/table.types';
 
 // Props & Emits
 const props = defineProps<{
@@ -337,17 +336,17 @@ const props = defineProps<{
   refresh?: () => void;
 }>();
 
-const emit = defineEmits([
-  'update:selection',
-  'update:layoutOptions',
-  'update:layoutQuery'
-  // Note: 'update:filter' does NOT exist in Directus 11 for layout extensions!
-]);
+const emit = defineEmits<{
+  'update:selection': [value: (string | number)[]];
+  'update:layoutOptions': [value: LayoutOptions];
+  'update:layoutQuery': [value: LayoutQuery];
+  'update:search': [value: string];
+  'update:filter': [value: any];
+}>();
 
 // Composables
 const { t } = useI18n();
 const router = useRouter();
-const api = useApi();
 const { useFieldsStore, useRelationsStore, useNotificationsStore } = useStores();
 const fieldsStore = useFieldsStore();
 const relationsStore = useRelationsStore();
@@ -361,11 +360,10 @@ const layoutQuery = useSync(props, 'layoutQuery', emit);
 // Collection info
 const { collection, filter, search } = toRefs(props);
 const {
-  info,
   primaryKeyField,
   fields: fieldsInCollection,
   sortField,
-} = useCollection(collection);
+} = useCollection(collection.value);
 
 
 // Watch for changes in layoutOptions to sync customFieldNames
@@ -378,7 +376,6 @@ watch(() => layoutOptions.value?.customFieldNames, (newNames) => {
 // Language Selector - Only for fetching available languages
 const { 
   languages, 
-  loadingLanguages, 
   fetchLanguages, 
 } = useLanguageSelector();
 
@@ -421,10 +418,10 @@ const showSelect = computed(() => {
 const sortAllowed = computed(() => !!sortField?.value);
 
 // Use pagination composable
-const { page, limit, pageSizeOptions } = useTablePagination(layoutQuery);
+const { page, limit } = useTablePagination(layoutQuery as any);
 
 // Use sort composable
-const { sort, tableSort, onSortChange } = useTableSort(layoutQuery);
+const { sort, tableSort, onSortChange } = useTableSort(layoutQuery as any);
 
 // Fields with default value computation
 const fieldsDefaultValue = computed(() => {
@@ -459,7 +456,7 @@ const fieldsForAliasing = computed(() => {
 });
 
 // Use alias fields for proper relational data handling
-const { aliasedFields, aliasQuery, aliasedKeys, getFromAliasedItem } = useAliasFields(
+const { aliasQuery, getFromAliasedItem } = useAliasFields(
   fieldsForAliasing,
   collection
 );
@@ -474,7 +471,7 @@ const fieldsWithRelational = computed(() => {
     return field.includes(':') ? field.split(':')[0] : field;
   }))];
   
-  const adjustedFields = adjustFieldsForDisplays(uniqueFields, props.collection);
+  const adjustedFields: string[] = adjustFieldsForDisplays(uniqueFields, props.collection);
   
   // Ensure languages_code is included for translations
   if (hasTranslationFields.value && !adjustedFields.includes('translations.languages_code')) {
@@ -485,20 +482,7 @@ const fieldsWithRelational = computed(() => {
   return adjustedFields;
 });
 
-// Get all fields including aliased ones
-const fieldsInQuery = computed(() => {
-  // Include both regular fields and aliased fields
-  const allFields = [...fields.value];
-  
-  // Add aliased field keys
-  Object.values(aliasedFields.value).forEach((alias: any) => {
-    if (alias.fields && Array.isArray(alias.fields)) {
-      allFields.push(...alias.fields);
-    }
-  });
-  
-  return [...new Set(allFields)]; // Remove duplicates
-});
+// Get all fields including aliased ones - currently unused
 
 
 // Table headers with relational field support
@@ -653,7 +637,7 @@ const tableHeadersWritable = computed({
 
 // Check if we have image fields
 const hasImageFields = computed(() => {
-  return fields.value?.some(field => {
+  return fields.value?.some((field: string) => {
     const fieldObj = fieldsInCollection.value?.find(f => f.field === field);
     return fieldObj?.meta?.interface === 'file-image' || 
            fieldObj?.meta?.interface === 'file' ||
@@ -854,27 +838,19 @@ const deep = computed(() => {
 const {
   allPresets: filterPresets,
   activePresetIds,
-  quickFilters,
-  manualFilters,
   mergedFilters: presetMergedFilters,
-  filterLogic,
-  quickFilterChips,
-  manualFilterChips,
   loadPresets,
   savePreset: saveFilterPreset,
   deletePreset: deleteFilterPreset,
   togglePreset: toggleFilterPreset,
   movePreset: moveFilterPreset,
   updatePreset: updateFilterPreset,
-  removeQuickFilter,
-  removeManualFilter,
-  clearAllFilters: clearAllPresetFilters,
   updateManualFilters
-} = useFilterPresets(collection, layoutOptions, emit);
+} = useFilterPresets(collection, layoutOptions as any, (event: string, ...args: any[]) => (emit as any)(event, ...args));
 
 // Handle quick filter saved event
 async function handleQuickFilterSaved(event: any) {
-  const { filterId, filter, activateFilter, clearNativeFilter } = event.detail || {};
+  const { filterId, activateFilter, clearNativeFilter } = event.detail || {};
   
   // Reload presets to get the new filter
   await loadPresets();
@@ -931,7 +907,7 @@ const combinedFilter = computed(() => {
   if (presetFilter) filters.push(presetFilter);
   if (searchFilterValue) filters.push(searchFilterValue);
   
-  if (filters.length === 0) return null;
+  if (filters.length === 0) return undefined;
   if (filters.length === 1) return filters[0];
   
   // Combine all filters with AND logic
@@ -946,7 +922,6 @@ const tableApi = useTableApi();
 const loading = tableApi.loading;
 const error = tableApi.error;
 const items = tableApi.items;
-const totalCount = tableApi.totalCount;
 const itemCount = tableApi.filterCount;
 
 // Calculate totalPages
@@ -966,7 +941,7 @@ async function getItems() {
       page: page.value,
       limit: limit.value,
       deep: deep.value,
-      alias: aliasQuery.value
+      alias: aliasQuery.value || undefined
     });
   } catch (err) {
     // Error is handled by tableApi internally
@@ -1015,35 +990,29 @@ function onToggleSelectAll() {
 // Edits tracking
 const { 
   edits, 
-  hasEdits, 
   savingCells, 
   updateFieldValue, 
-  autoSaveEdits, 
-  resetEdits 
-} = useTableEdits(collection, primaryKeyField, items, getItems);
+  autoSaveEdits
+} = useTableEdits(collection, ref(primaryKeyField.value || undefined), items, getItems);
 
 
 // Field management
 const {
   customFieldNames,
   showRenameDialog,
-  renameFieldKey,
   renameFieldValue,
   originalFieldName,
   showLanguageDialog,
   pendingTranslationField,
   selectedLanguagesForField,
-  getFieldName,
   renameField,
   resetToOriginal,
   confirmRename,
   cancelRename,
-  showLanguageSelectionForField,
   cancelLanguageSelection,
   confirmLanguageSelection,
-  toggleField,
   removeField
-} = useTableFields(fields, fieldsInCollection, collection, fieldsStore, relationsStore, layoutOptions);
+} = useTableFields(fields as Ref<string[]>, ref(fieldsInCollection.value), collection, fieldsStore, relationsStore, layoutOptions as any);
 
 // Fetch languages when we have translation fields
 watch(hasTranslationFields, (hasTranslations) => {
@@ -1053,66 +1022,28 @@ watch(hasTranslationFields, (hasTranslations) => {
 }, { immediate: true });
 
 
-// Filter removal handlers
-function removeFilter(filter: any) {
-  if (filter.source === 'quick') {
-    removeQuickFilter(filter);
-  } else {
-    removeManualFilter(filter);
-  }
-}
+// Filter removal handlers - currently unused
+// function removeFilter(filter: any) {
+//   if (filter.source === 'quick') {
+//     removeQuickFilter(filter);
+//   } else {
+//     removeManualFilter(filter);
+//   }
+// }
 
-// Clear all filters including native filter interface
-async function clearAllFilters() {
-  // Clear our preset filters
-  clearAllPresetFilters();
-  
-  // Clear search
-  searchQuery.value = '';
-  
-  // Clear native filter interface by updating URL
-  await clearNativeFilter();
-}
+// Clear all filters including native filter interface - currently unused
+// async function clearAllFilters() {
+//   // Clear our preset filters
+//   clearAllPresetFilters();
+//   
+//   // Clear search
+//   searchQuery.value = '';
+//   
+//   // Clear native filter interface by updating URL
+//   await clearNativeFilter();
+// }
 
-// Helper function to clear native Directus filter interface
-async function clearNativeFilter() {
-  const currentQuery = { ...router.currentRoute.value.query };
-  
-  // Remove filter-related query parameters
-  delete currentQuery.filter;
-  delete currentQuery.search;
-  
-  // Emit updates for consistency
-  emit('update:filter', null);
-  emit('update:layoutQuery', {
-    ...layoutQuery.value,
-    filter: null
-  });
-  
-  // Update manual filters in our preset system
-  updateManualFilters({});
-  
-  // Update the URL - this will trigger the native interface to clear
-  await router.replace({
-    path: router.currentRoute.value.path,
-    query: currentQuery
-  });
-  
-  // Wait for next tick to ensure the update is processed
-  await nextTick();
-  
-  // Force refresh the items to show the unfiltered results
-  await refreshItems();
-  
-  // Show success notification
-  notificationsStore.add({
-    title: 'Filter cleared',
-    text: 'Native filter interface has been reset',
-    type: 'success',
-    persist: false,
-    closeable: true,
-  });
-}
+
 
 
 // Selection
@@ -1213,14 +1144,14 @@ function handleItemsDuplicated() {
   selection.value = [];
 }
 
-// Handle items deleted event
-async function handleItemsDeleted(deletedIds?: any[]) {
-  // Clear selection
-  selection.value = [];
-  
-  // Refresh from server
-  await getItems();
-}
+// Handle items deleted event - currently unused 
+// async function handleItemsDeleted(deletedIds?: any[]) {
+//   // Clear selection
+//   selection.value = [];
+//   
+//   // Refresh from server
+//   await getItems();
+// }
 
 // Setup event listeners for cross-component communication
 onMounted(() => {

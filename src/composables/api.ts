@@ -1,4 +1,4 @@
-import { ref, Ref, computed } from 'vue';
+import { ref, computed } from 'vue';
 import { useApi } from '@directus/extensions-sdk';
 import type { Item, Filter } from '@directus/types';
 
@@ -43,7 +43,7 @@ export function useTableApi() {
         fields: options.fields,
         page: options.page || 1,
         limit: options.limit || 100,
-        meta: 'filter_count,total_count'
+        meta: 'filter_count,total_count',
       };
 
       // Add filter if provided
@@ -81,7 +81,7 @@ export function useTableApi() {
 
         return {
           data: items.value,
-          meta: response.data.meta
+          meta: response.data.meta,
         };
       }
 
@@ -110,13 +110,13 @@ export function useTableApi() {
       } else if (typeof value === 'object' && value?.isFullTranslations) {
         // Handle full translations update from interface-translations
         await api.patch(`/items/${collection}/${primaryKey}`, {
-          translations: value.translations
+          translations: value.translations,
         });
       } else {
         // Regular field update
         const cleanField = field.includes(':') ? field.split(':')[0] : field;
         await api.patch(`/items/${collection}/${primaryKey}`, {
-          [cleanField]: value
+          [cleanField]: value,
         });
       }
     } catch (err) {
@@ -136,12 +136,12 @@ export function useTableApi() {
     // Get current item with translations
     const currentItem = await api.get(`/items/${collection}/${primaryKey}`, {
       params: {
-        fields: ['translations.*']
-      }
+        fields: ['translations.*'],
+      },
     });
 
     const existingTranslations = currentItem.data?.data?.translations || [];
-    
+
     // Find or create translation for the language
     const translationIndex = existingTranslations.findIndex(
       (t: any) => t.languages_code === translationData.language
@@ -149,34 +149,32 @@ export function useTableApi() {
 
     if (translationIndex >= 0) {
       // Update existing translation
-      existingTranslations[translationIndex][translationData.translationField] = translationData.value;
+      existingTranslations[translationIndex][translationData.translationField] =
+        translationData.value;
     } else {
       // Create new translation
       existingTranslations.push({
         languages_code: translationData.language,
-        [translationData.translationField]: translationData.value
+        [translationData.translationField]: translationData.value,
       });
     }
 
     // Update the item with modified translations
     await api.patch(`/items/${collection}/${primaryKey}`, {
-      translations: existingTranslations
+      translations: existingTranslations,
     });
   }
 
   /**
    * Delete items
    */
-  async function deleteItems(
-    collection: string,
-    primaryKeys: (string | number)[]
-  ): Promise<void> {
+  async function deleteItems(collection: string, primaryKeys: (string | number)[]): Promise<void> {
     try {
       if (primaryKeys.length === 1) {
         await api.delete(`/items/${collection}/${primaryKeys[0]}`);
       } else {
         await api.delete(`/items/${collection}`, {
-          data: primaryKeys
+          data: primaryKeys,
         });
       }
     } catch (err) {
@@ -230,12 +228,12 @@ export function useTableApi() {
     try {
       const params: any = {
         export: format,
-        ...options
+        ...options,
       };
 
       const response = await api.get(`/items/${collection}`, {
         params,
-        responseType: 'blob'
+        responseType: 'blob',
       });
 
       return response.data;
@@ -267,8 +265,8 @@ export function useTableApi() {
         params: {
           fields: ['code', 'name'],
           limit: -1,
-          sort: ['name']
-        }
+          sort: ['name'],
+        },
       });
       return response.data?.data || [];
     } catch (err) {
@@ -284,8 +282,18 @@ export function useTableApi() {
     try {
       const response = await api.get(`/files/${fileId}`, {
         params: {
-          fields: ['id', 'title', 'filename_download', 'type', 'filesize', 'width', 'height', 'created_on', 'modified_on']
-        }
+          fields: [
+            'id',
+            'title',
+            'filename_download',
+            'type',
+            'filesize',
+            'width',
+            'height',
+            'created_on',
+            'modified_on',
+          ],
+        },
       });
       return response.data?.data;
     } catch (err) {
@@ -293,8 +301,18 @@ export function useTableApi() {
       try {
         const response = await api.get(`/items/directus_files/${fileId}`, {
           params: {
-            fields: ['id', 'title', 'filename_download', 'type', 'filesize', 'width', 'height', 'created_on', 'modified_on']
-          }
+            fields: [
+              'id',
+              'title',
+              'filename_download',
+              'type',
+              'filesize',
+              'width',
+              'height',
+              'created_on',
+              'modified_on',
+            ],
+          },
         });
         return response.data?.data;
       } catch (err2) {
@@ -312,14 +330,14 @@ export function useTableApi() {
     search?: string;
     limit?: number;
     page?: number;
-  }): Promise<{ files: any[], folders: any[] }> {
+  }): Promise<{ files: any[]; folders: any[] }> {
     try {
       const params: any = {
         fields: ['id', 'title', 'filename_download', 'type', 'folder', 'modified_on', 'filesize'],
         limit: options.limit || 50,
         page: options.page || 1,
         sort: ['-uploaded_on'],
-        filter: {}
+        filter: {},
       };
 
       // Set filter for folder - null means root level
@@ -345,7 +363,7 @@ export function useTableApi() {
         fields: ['id', 'name', 'parent'],
         limit: -1,
         sort: ['name'],
-        filter: {}
+        filter: {},
       };
 
       // Set filter for parent folder - null means root level
@@ -364,7 +382,7 @@ export function useTableApi() {
 
       return {
         files: filesResponse.data?.data || [],
-        folders: foldersResponse.data?.data || []
+        folders: foldersResponse.data?.data || [],
       };
     } catch (err) {
       error.value = err as Error;
@@ -375,7 +393,7 @@ export function useTableApi() {
   /**
    * Fetch folder details and breadcrumb
    */
-  async function fetchFolder(folderId: string | null): Promise<{ folder: any, breadcrumb: any[] }> {
+  async function fetchFolder(folderId: string | null): Promise<{ folder: any; breadcrumb: any[] }> {
     try {
       if (!folderId) {
         return { folder: null, breadcrumb: [] };
@@ -390,11 +408,11 @@ export function useTableApi() {
 
       const folder = response.data?.data;
       const breadcrumb = [];
-      
+
       if (folder) {
         let current = folder;
         breadcrumb.unshift(current);
-        
+
         while (current.parent) {
           try {
             const parentResponse = await api.get(`/folders/${current.parent}`);
@@ -430,7 +448,7 @@ export function useTableApi() {
     try {
       // Get the original item with translations
       const params: any = {
-        fields: ['*']
+        fields: ['*'],
       };
 
       if (includeTranslations) {
@@ -464,10 +482,10 @@ export function useTableApi() {
       if (includeTranslations && translations && translations.length > 0 && newItemId) {
         for (const translation of translations) {
           const translationData = { ...translation };
-          
+
           // Remove translation ID and set new parent reference
           delete translationData.id;
-          
+
           // Determine the parent field name
           const parentFieldName = `${collection.replace('content_', '')}_id`;
           translationData[parentFieldName] = newItemId;
@@ -504,6 +522,6 @@ export function useTableApi() {
     fetchLanguages,
     fetchFile,
     fetchFiles,
-    fetchFolder
+    fetchFolder,
   };
 }

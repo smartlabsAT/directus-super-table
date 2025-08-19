@@ -185,7 +185,7 @@ const hasNativeFilter = computed(() => {
   
   // Check if it's ONLY the archived filter in a more complex structure
   if (props.filter._and && Array.isArray(props.filter._and)) {
-    const nonArchivedFilters = props.filter._and.filter(f => {
+    const nonArchivedFilters = props.filter._and.filter((f: any) => {
       // Filter out status != archived
       if (f.status && f.status._neq === 'archived') return false;
       return true;

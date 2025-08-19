@@ -248,22 +248,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import type { FilterPreset } from '../types/filter.types';
 import { Filter } from '@directus/types';
-
-export interface FilterPreset {
-  id: string;
-  name: string;
-  description?: string;
-  icon?: string;
-  filter: Filter;
-  isPinned?: boolean;
-  isSystem?: boolean;
-  isShared?: boolean;
-  resultCount?: number;
-  order?: number;
-}
 
 interface Props {
   collection: string;
@@ -376,9 +364,10 @@ const hasMorePresets = computed(() => {
   return hiddenPresets.value.length > 0;
 });
 
-const hasActiveFilters = computed(() => {
-  return props.currentFilter && Object.keys(props.currentFilter).length > 0;
-});
+// Has active filters - currently unused
+// const hasActiveFilters = computed(() => {
+//   return props.currentFilter && Object.keys(props.currentFilter).length > 0;
+// });
 
 const hasNativeFilters = computed(() => {
   return props.nativeFilter && Object.keys(props.nativeFilter).length > 0;
@@ -393,13 +382,14 @@ function togglePreset(preset: FilterPreset) {
   emit('toggle-preset', preset);
 }
 
-function openSaveDialog() {
-  saveDialogActive.value = true;
-  newPresetName.value = '';
-  newPresetDescription.value = '';
-  newPresetPinned.value = true;
-  newPresetShared.value = false;
-}
+// Open save dialog - currently unused
+// function openSaveDialog() {
+//   saveDialogActive.value = true;
+//   newPresetName.value = '';
+//   newPresetDescription.value = '';
+//   newPresetPinned.value = true;
+//   newPresetShared.value = false;
+// }
 
 function savePreset() {
   if (!newPresetName.value) return;
@@ -412,6 +402,7 @@ function savePreset() {
   emit('save-preset', {
     name: newPresetName.value,
     description: newPresetDescription.value,
+    collection: props.collection,
     filter: filterToSave,
     isPinned: newPresetPinned.value,
     isShared: newPresetShared.value,

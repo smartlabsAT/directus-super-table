@@ -1,5 +1,4 @@
-import type { Field, Item, Sort, Filter } from '@directus/types';
-import type { Ref, ComputedRef } from 'vue';
+import type { Filter } from '@directus/types';
 
 // Quick Filter interface for storing filter presets
 export interface QuickFilter {

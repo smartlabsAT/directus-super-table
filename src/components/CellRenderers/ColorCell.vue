@@ -47,8 +47,8 @@ const colorValue = computed(() => {
   if (!props.value) return null;
   
   // Handle color object format (some interfaces return {color: '#hex'})
-  if (typeof props.value === 'object' && 'color' in props.value) {
-    return props.value.color;
+  if (typeof props.value === 'object' && props.value && 'color' in props.value) {
+    return (props.value as any).color;
   }
   
   // Handle direct color string

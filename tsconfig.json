@@ -4,7 +4,7 @@
     "module": "ESNext",
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "jsx": "preserve",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
@@ -24,10 +24,13 @@
     "baseUrl": "."
   },
   "include": [
+    "index.ts",
     "src/**/*.ts",
     "src/**/*.vue",
     "src/**/*.d.ts",
-    "types/**/*.d.ts"
+    "types/**/*.d.ts",
+    "src/types/**/*.d.ts",
+    "vue-i18n.d.ts"
   ],
   "exclude": [
     "node_modules",
