@@ -734,7 +734,7 @@ function buildSearchFilter(query: string) {
     } else {
       // Direct fields - check if it's a searchable type
       const field = fieldsStore.getField(collection.value, actualFieldKey);
-      const searchableTypes = ['string', 'text', 'uuid'];
+      const searchableTypes = ['string', 'text'];
       
       if (field && searchableTypes.includes(field.type)) {
         conditions.push({
@@ -749,7 +749,7 @@ function buildSearchFilter(query: string) {
   // If no searchable fields, fallback to all string fields
   if (conditions.length === 0) {
     fieldsInCollection.value.forEach((field: Field) => {
-      const searchableTypes = ['string', 'text', 'uuid'];
+      const searchableTypes = ['string', 'text'];
       if (searchableTypes.includes(field.type) && !field.meta?.hidden) {
         conditions.push({
           [field.field]: {
