@@ -1,64 +1,21 @@
 <template>
-  <div class="layout-options">
-    <!-- General Settings -->
-    <div class="section">
-      <div class="section-title">{{ t('layouts.super-layout-table.general') }}</div>
-      
-      <div class="field">
-        <div class="label">{{ t('layouts.super-layout-table.show_toolbar') }}</div>
-        <v-checkbox v-model="showToolbar" />
-      </div>
-
-      <div class="field">
-        <div class="label">{{ t('layouts.super-layout-table.show_selection') }}</div>
-        <v-checkbox v-model="showSelect" />
-      </div>
-
-      <div class="field">
-        <div class="label">{{ t('layouts.super-layout-table.edit_mode') }}</div>
-        <v-checkbox v-model="editMode" />
-      </div>
-    </div>
-
-    <!-- Display Settings -->
-    <div class="section">
-      <div class="section-title">{{ t('layouts.super-layout-table.display') }}</div>
-      
-      <div class="field">
-        <div class="label">{{ t('layouts.super-layout-table.row_height') }}</div>
-        <v-select
-          v-model="spacing"
-          :items="[
-            { text: t('layouts.super-layout-table.compact'), value: 'compact' },
-            { text: t('layouts.super-layout-table.cozy'), value: 'cozy' },
-            { text: t('layouts.super-layout-table.comfortable'), value: 'comfortable' },
-          ]"
-        />
-      </div>
-
-    </div>
-
-    <!-- Quick Filters Info -->
-    <div class="section" v-if="quickFilters && quickFilters.length > 0">
-      <div class="section-title">{{ t('layouts.super-layout-table.quick_filters') }}</div>
-      <div class="info-text">
-        {{ t('layouts.super-layout-table.quick_filters_count', quickFilters.length) }}
-      </div>
-    </div>
-
-    <!-- Custom Field Names Info -->
-    <div class="section" v-if="customFieldNames && Object.keys(customFieldNames).length > 0">
-      <div class="section-title">{{ t('layouts.super-layout-table.custom_headers') }}</div>
-      <div class="info-text">
-        {{ t('layouts.super-layout-table.custom_headers_count', Object.keys(customFieldNames).length) }}
-      </div>
-    </div>
+  <div class="field">
+    <label class="type-label">Show Toolbar</label>
+    <v-checkbox v-model="showToolbar" label="Display toolbar with actions" />
   </div>
+
+  <div class="field">
+    <label class="type-label">Edit Mode</label>
+    <v-checkbox v-model="editMode" label="Enable inline editing" />
+  </div>
+
+
+
+
 </template>
 
 <script lang="ts" setup>
 import { computed } from 'vue';
-import { useI18n } from 'vue-i18n';
 import { useSync } from '@directus/extensions-sdk';
 
 interface LayoutOptions {
@@ -77,8 +34,6 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['update:layoutOptions']);
-
-const { t } = useI18n();
 
 const layoutOptions = useSync(props, 'layoutOptions', emit);
 
@@ -124,54 +79,25 @@ const spacing = computed({
   },
 });
 
-
 // Read-only computed for display
 const quickFilters = computed(() => layoutOptions.value?.quickFilters || []);
 const customFieldNames = computed(() => layoutOptions.value?.customFieldNames || {});
 </script>
 
 <style scoped>
-.layout-options {
-  padding: var(--content-padding);
-}
-
-.section {
+.field {
   margin-bottom: var(--form-vertical-gap);
 }
 
-.section-title {
-  margin-bottom: 12px;
-  color: var(--foreground-subdued);
+.type-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--foreground-normal);
   font-weight: 600;
   font-size: 14px;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
 }
 
-.field {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-  gap: 12px;
-}
-
-.label {
-  flex: 1;
-  color: var(--foreground-normal);
-}
-
-.info-text {
-  color: var(--foreground-subdued);
-  font-size: 14px;
-  padding: 8px 0;
-}
-
-.field:last-child {
-  margin-bottom: 0;
-}
-
-.section:last-child {
-  margin-bottom: 0;
+.v-notice {
+  margin-top: var(--form-vertical-gap);
 }
 </style>
