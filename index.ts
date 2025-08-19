@@ -1,6 +1,7 @@
 import { defineLayout } from '@directus/extensions-sdk';
 import LayoutComponent from './src/super-table.vue';
 import ActionsComponent from './src/actions.vue';
+import OptionsComponent from './src/options.vue';
 
 export default defineLayout({
   id: 'super-layout-table',
@@ -8,7 +9,7 @@ export default defineLayout({
   icon: 'table_rows',
   component: LayoutComponent,
   slots: {
-    options: () => null,
+    options: OptionsComponent,
     sidebar: () => null,
     actions: ActionsComponent,
   },
