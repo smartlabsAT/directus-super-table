@@ -36,7 +36,7 @@ jobs:
       - name: Create release archive
         run: |
           mkdir -p release
-          cp -r dist release/
+          cp index.js release/
           cp package.json release/
           cp README.md release/ 2>/dev/null || echo "No README.md found"
           cd release
