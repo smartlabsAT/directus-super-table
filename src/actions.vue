@@ -37,10 +37,6 @@
       <v-card>
         <v-card-title>Save as Quick Filter</v-card-title>
         <v-card-text>
-          <v-notice type="info">
-            After saving, please manually clear the native filter to avoid duplicate filtering.
-          </v-notice>
-
           <div class="form-grid" @click.stop>
             <!-- Filter Name Input -->
             <div class="full-width">
@@ -111,6 +107,7 @@ const props = defineProps<{
   search?: string;
   layoutOptions?: any;
   layoutQuery?: any;
+  clearFilters?: () => void;
 }>();
 
 // Emits
@@ -287,12 +284,17 @@ async function saveFilter() {
     // Emit the update to save in layoutOptions
     emit('update:layoutOptions', updatedOptions);
 
+    // Clear the native filters after saving as quick filter
+    if (props.clearFilters) {
+      props.clearFilters();
+    }
+
     // Note: We only save to layoutOptions, not as Directus bookmarks
     // Bookmarks should be created explicitly by the user
 
     notificationsStore.add({
       title: 'Quick Filter Saved',
-      text: `"${filterName.value}" has been saved and activated. Note: Native filter panel must be cleared manually.`,
+      text: `"${filterName.value}" has been saved and activated`,
       type: 'success',
     });
 
@@ -307,7 +309,7 @@ async function saveFilter() {
           filterId: newFilterId,
           filter: props.filter,
           activateFilter: true,
-          clearNativeFilter: false, // Cannot clear native filter - Directus limitation
+          clearNativeFilter: true, // We now clear native filters automatically
         },
       })
     );

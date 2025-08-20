@@ -213,16 +213,19 @@
         />
       </template>
 
-      <!-- Empty State -->
-      <template #no-data>
-        <div class="no-data">
-          <div class="padding-box">
-            <v-icon name="search" large />
-            <p>{{ t('no_items_found') }}</p>
-          </div>
-        </div>
-      </template>
     </v-table>
+
+    <!-- Empty State when no items and not loading -->
+    <div v-else-if="!loading && !error" class="no-data">
+      <div class="padding-box">
+        <v-icon name="search" large />
+        <p v-if="hasActiveFilters || searchQuery || search">{{ t('no_results') }}</p>
+        <p v-else>{{ t('no_items') }}</p>
+        <v-button v-if="hasActiveFilters || searchQuery || search" @click="clearAllFilters">
+          {{ t('clear_filters') }}
+        </v-button>
+      </div>
+    </div>
 
     <!-- Pagination Footer -->
     <div class="footer" v-if="itemCount && itemCount > 0">
@@ -302,6 +305,7 @@ const props = defineProps<{
   resetPreset?: () => void;
   resetPresetAndRefresh?: () => void;
   refresh?: () => void;
+  clearFilters?: () => void;
 }>();
 
 const emit = defineEmits<{
@@ -1014,6 +1018,29 @@ const selectionWritable = computed({
   },
 });
 
+// Check if we have active filters or search
+const hasActiveFilters = computed(() => {
+  return activePresetIds.value.length > 0 || 
+         (filter.value && Object.keys(filter.value).length > 0) ||
+         (search.value && search.value.length > 0);
+});
+
+// Clear all filters and search (like in original Directus)
+function clearAllFilters() {
+  // Use the parent's clearFilters function if available (as senior colleague recommended)
+  if (props.clearFilters) {
+    props.clearFilters();
+  }
+  
+  // Clear our local search query
+  searchQuery.value = '';
+  
+  // Clear active quick filter presets
+  if (activePresetIds.value.length > 0) {
+    activePresetIds.value = [];
+  }
+}
+
 // Methods
 
 function onAlignChange(field: string, align: 'left' | 'center' | 'right') {
@@ -1316,13 +1343,29 @@ v-icon.edit-toggle.active {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100%;
+  height: var(--input-height-tall);
+  min-height: 400px;
   color: var(--foreground-subdued);
 }
 
 .padding-box {
   text-align: center;
   padding: 32px;
+}
+
+.padding-box .v-icon {
+  --v-icon-color: var(--foreground-subdued);
+  margin-bottom: 16px;
+}
+
+.padding-box p {
+  color: var(--foreground-subdued);
+  font-size: 16px;
+  margin-bottom: 24px;
+}
+
+.padding-box .v-button {
+  margin: 0 auto;
 }
 
 .footer {
