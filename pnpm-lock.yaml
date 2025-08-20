@@ -21,6 +21,9 @@ importers:
       '@directus/types':
         specifier: ^11.0.0
         version: 11.2.1(knex@3.1.0)(vue@3.5.18(typescript@5.9.2))
+      '@directus/utils':
+        specifier: ^13.0.9
+        version: 13.0.9(vue@3.5.18(typescript@5.9.2))
       '@eslint/js':
         specifier: ^9.33.0
         version: 9.33.0
@@ -104,6 +107,9 @@ packages:
   '@directus/constants@11.0.4':
     resolution: {integrity: sha512-n44zwhZBy0YlMrtQFVtnHVAOk/dfefCSQD4qJBq1C1waXMEheG1ph5FVoa95nauq6jmdTILUibiChTfoFMVNPg==}
 
+  '@directus/constants@13.0.2':
+    resolution: {integrity: sha512-dMjVGlSV12VDrfKW9TX8im0rhVjVjPyeR9EMTLAXYDVwtSXsoGiKt1AFMmh6pGDziA/5lhFr+CPH8mz2YedF5w==}
+
   '@directus/extensions-sdk@11.0.10':
     resolution: {integrity: sha512-BEU/QU1kHtmrtdusPzPwNN4m/VQMfX/o5cnQzsoKdy0nlELJ7WSc+Kc+rBuQ0v2JEPOusKVvPbDSppNAv2zG6w==}
     engines: {node: '>=12.20.0'}
@@ -135,6 +141,9 @@ packages:
   '@directus/system-data@1.1.1':
     resolution: {integrity: sha512-lTJMnk92X6SNrHl2wgwR7C9MFV1s/elo3MF2DFEGv17307U/fMJKF2cI4SyKmbUjuxo9tnuM83GJN9BGgwfDoQ==}
 
+  '@directus/system-data@3.2.1':
+    resolution: {integrity: sha512-ctwkV488zdQKiO5jkLglFyn8SkHojtH2ZPAmC49oofcGI3vJo+gFKeGkc54TdHg/M5weVfJwoGG8e2qymVbO4w==}
+
   '@directus/themes@0.3.11':
     resolution: {integrity: sha512-XHzHKLfWWIhcyfJNQ0KDdFhyFiU9Xfrh6/iZMCltMdE1q3T8PUMNl+gK+YsISDVY6KHcK7Th1vyXUn5wexYXsA==}
     peerDependencies:
@@ -157,6 +166,14 @@ packages:
     resolution: {integrity: sha512-Gb+EiPi0h3fI9oRKWiBTywychxHXOKUnbFDGizXHo9y/fZYp5olL7XH1PVgaJeGKy452xLzFMUYNQsLN4lXmlg==}
     peerDependencies:
       vue: ^3.4
+    peerDependenciesMeta:
+      vue:
+        optional: true
+
+  '@directus/utils@13.0.9':
+    resolution: {integrity: sha512-ETczTOknWetPO7f49HidfHv0aEZBJdvuMoQTvDklfM1mtw0ogaHKiVwuJa87jJ+jts/V83JSV3psFNrlFn5t8Q==}
+    peerDependencies:
+      vue: 3.5.18
     peerDependenciesMeta:
       vue:
         optional: true
@@ -1054,6 +1071,9 @@ packages:
   date-fns@3.6.0:
     resolution: {integrity: sha512-fRHTG8g/Gif+kSh50gaGEdToemgfj74aRX3swtiouboip5JDLAyDE9F11nHMIcvOaXeOC6D7SpNhi7uFyB7Uww==}
 
+  date-fns@4.1.0:
+    resolution: {integrity: sha512-Ukq0owbQXxa/U3EGtsdVBkR1w7KOQ5gIBqdH2hkvknzZPYvBxb/aa6E8L7tmjFtkwZBu3UXBbjIgPo/Ez4xaNg==}
+
   de-indent@1.0.2:
     resolution: {integrity: sha512-e/1zu3xH5MQryN2zdVaF0OrdNLUbvWxzMbi+iNA6Bky7l1RoP8a2fIbRocyHclXt/arDrrR6lL3TqFD9pMQTsg==}
 
@@ -1324,6 +1344,10 @@ packages:
 
   fs-extra@11.2.0:
     resolution: {integrity: sha512-PmDi3uwK5nFuXh7XDTlVnS17xJS7vW36is2+w3xcv8SVxiB4NyATf4ctkVY5bkSjX0Y4nbvZCq1/EjtEyr9ktw==}
+    engines: {node: '>=14.14'}
+
+  fs-extra@11.3.0:
+    resolution: {integrity: sha512-Z4XaCL6dUDHfP/jT25jJKMmtxvuwbkrD1vNSMFlo9lNLY2c5FHYSQgHPRZUjAB26TpDEoW9HCOgplrdbaPV/ew==}
     engines: {node: '>=14.14'}
 
   fs.realpath@1.0.0:
@@ -2423,6 +2447,8 @@ snapshots:
 
   '@directus/constants@11.0.4': {}
 
+  '@directus/constants@13.0.2': {}
+
   '@directus/extensions-sdk@11.0.10(@types/node@24.3.0)(@unhead/vue@1.11.20(vue@3.5.18(typescript@5.9.2)))(knex@3.1.0)(pinia@2.3.1(typescript@5.9.2)(vue@3.5.18(typescript@5.9.2)))(terser@5.43.1)(typescript@5.9.2)':
     dependencies:
       '@directus/composables': 10.1.16(vue@3.4.27(typescript@5.9.2))
@@ -2516,6 +2542,8 @@ snapshots:
 
   '@directus/system-data@1.1.1': {}
 
+  '@directus/system-data@3.2.1': {}
+
   '@directus/themes@0.3.11(@unhead/vue@1.11.20(vue@3.5.18(typescript@5.9.2)))(pinia@2.3.1(typescript@5.9.2)(vue@3.5.18(typescript@5.9.2)))(vue@3.4.27(typescript@5.9.2))':
     dependencies:
       '@directus/utils': 11.0.11(vue@3.4.27(typescript@5.9.2))
@@ -2575,6 +2603,19 @@ snapshots:
       micromustache: 8.0.3
     optionalDependencies:
       vue: 3.4.27(typescript@5.9.2)
+
+  '@directus/utils@13.0.9(vue@3.5.18(typescript@5.9.2))':
+    dependencies:
+      '@directus/constants': 13.0.2
+      '@directus/system-data': 3.2.1
+      date-fns: 4.1.0
+      fs-extra: 11.3.0
+      joi: 17.13.3
+      js-yaml: 4.1.0
+      lodash-es: 4.17.21
+      micromustache: 8.0.3
+    optionalDependencies:
+      vue: 3.5.18(typescript@5.9.2)
 
   '@esbuild/android-arm64@0.17.19':
     optional: true
@@ -3449,6 +3490,8 @@ snapshots:
 
   date-fns@3.6.0: {}
 
+  date-fns@4.1.0: {}
+
   de-indent@1.0.2: {}
 
   debug@4.3.4:
@@ -3758,6 +3801,12 @@ snapshots:
       universalify: 2.0.1
 
   fs-extra@11.2.0:
+    dependencies:
+      graceful-fs: 4.2.11
+      jsonfile: 6.1.0
+      universalify: 2.0.1
+
+  fs-extra@11.3.0:
     dependencies:
       graceful-fs: 4.2.11
       jsonfile: 6.1.0
