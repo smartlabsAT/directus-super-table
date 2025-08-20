@@ -287,19 +287,8 @@ async function saveFilter() {
     // Emit the update to save in layoutOptions
     emit('update:layoutOptions', updatedOptions);
 
-    // Also try to save to Directus presets API for backward compatibility
-    try {
-      await tableApi.savePreset({
-        bookmark: filterName.value,
-        collection: props.collection,
-        layout: 'super-layout-table',
-        layout_query: {
-          filter: props.filter,
-        },
-      });
-    } catch {
-      // Failed to save to presets API (saved in layout)
-    }
+    // Note: We only save to layoutOptions, not as Directus bookmarks
+    // Bookmarks should be created explicitly by the user
 
     notificationsStore.add({
       title: 'Quick Filter Saved',

@@ -183,20 +183,8 @@ export function useFilterPresets(
       activePresetIds.value = [newPreset.id];
     }
 
-    // Also try to save to Directus presets API for backward compatibility
-    try {
-      await tableApi.savePreset({
-        bookmark: preset.name,
-        collection: collection.value,
-        layout: 'super-layout-table',
-        layout_query: {
-          filter: preset.filter,
-        },
-        user: userStore.currentUser?.id,
-      });
-    } catch {
-      // Failed to save preset to API (will be saved with layout)
-    }
+    // Note: We only save to layoutOptions, not as Directus bookmarks
+    // Bookmarks should be created explicitly by the user
   }
 
   async function deletePreset(preset: FilterPreset) {
