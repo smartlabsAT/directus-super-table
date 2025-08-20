@@ -56,7 +56,7 @@
       :sort="tableSort"
       :items="items"
       :loading="loading"
-      :item-key="primaryKeyField.value?.field || 'id'"
+      :item-key="primaryKeyField.field || 'id'"
       :show-manual-sort="sortAllowed"
       :manual-sort-key="sortField?.value || null"
       allow-header-reorder
@@ -203,9 +203,9 @@
           :item="item"
           :field-key="header.value"
           :field="header.field"
-          :edits="edits[item[primaryKeyField.value?.field || 'id']]?.[header.value]"
+          :edits="edits[item[primaryKeyField.field || 'id']]?.[header.value]"
           :get-display-value="getFromAliasedItem"
-          :saving="savingCells[`${item[primaryKeyField.value?.field || 'id']}_${header.value}`]"
+          :saving="savingCells[`${item[primaryKeyField.field || 'id']}_${header.value}`]"
           :edit-mode="editMode"
           :align="header.align"
           @update="updateFieldValue"
@@ -436,6 +436,12 @@ const fieldsWithRelational = computed(() => {
   ];
 
   const adjustedFields: string[] = adjustFieldsForDisplays(uniqueFields, props.collection);
+
+  // CRITICAL: Always include the primary key field for navigation and identification
+  const pkField = primaryKeyField.field || 'id';
+  if (!adjustedFields.includes(pkField)) {
+    adjustedFields.unshift(pkField); // Add at the beginning
+  }
 
   // Ensure languages_code is included for translations
   if (hasTranslationFields.value && !adjustedFields.includes('translations.languages_code')) {
@@ -961,7 +967,7 @@ function onToggleSelectAll() {
       selection.value = [];
     } else {
       // Select all - use keys since we have selection-use-keys
-      selection.value = items.value.map((item) => item[primaryKeyField.value?.field || 'id']);
+      selection.value = items.value.map((item) => item[primaryKeyField.field || 'id']);
     }
   }
 }
@@ -1088,7 +1094,20 @@ function toPage(newPage: number) {
 }
 
 function editItem(item: Item) {
-  const primaryKey = item[primaryKeyField.value!.field];
+  // Get the primary key field name directly (no .value needed as per Directus pattern)
+  const pkField = primaryKeyField.field || 'id';
+  const primaryKey = item[pkField];
+  
+  if (!primaryKey) {
+    console.warn('No primary key found:', { item, pkField, primaryKeyField });
+    notificationsStore.add({
+      type: 'warning',
+      title: 'Navigation Error',
+      text: `Could not find primary key in item`,
+    });
+    return;
+  }
+  
   router.push(`/content/${collection.value}/${primaryKey}`);
 }
 
