@@ -13,7 +13,7 @@
     >
       <v-icon name="content_copy" />
     </v-button>
-    
+
     <!-- Save as Quick Filter Button - nur wenn native Filter gesetzt ist -->
     <v-button
       v-if="hasNativeFilter"
@@ -25,7 +25,7 @@
     >
       <v-icon name="bookmark_add" />
     </v-button>
-    
+
     <!-- Save Filter Dialog -->
     <v-dialog
       v-if="saveDialogActive"
@@ -37,10 +37,6 @@
       <v-card>
         <v-card-title>Save as Quick Filter</v-card-title>
         <v-card-text>
-          <v-notice type="info">
-            After saving, please manually clear the native filter to avoid duplicate filtering.
-          </v-notice>
-          
           <div class="form-grid" @click.stop>
             <!-- Filter Name Input -->
             <div class="full-width">
@@ -52,7 +48,7 @@
                 @click.stop
               />
             </div>
-            
+
             <!-- Icon Selector -->
             <div class="full-width" @click.stop>
               <label class="field-label">Icon (optional)</label>
@@ -62,7 +58,7 @@
                 @click.stop="fixIconMenuScroll"
               />
             </div>
-            
+
             <!-- Color Selector -->
             <div class="full-width" @click.stop>
               <label class="field-label">Color Theme</label>
@@ -75,10 +71,10 @@
                   :title="option.text"
                   @click.stop="filterColor = option.value"
                 >
-                  <v-icon 
-                    v-if="filterColor === option.value" 
-                    name="check" 
-                    small 
+                  <v-icon
+                    v-if="filterColor === option.value"
+                    name="check"
+                    small
                     class="check-icon"
                   />
                 </div>
@@ -88,12 +84,8 @@
           </div>
         </v-card-text>
         <v-card-actions>
-          <v-button secondary @click="saveDialogActive = false">
-            Cancel
-          </v-button>
-          <v-button :disabled="!filterName" @click="saveFilter">
-            Save
-          </v-button>
+          <v-button secondary @click="saveDialogActive = false"> Cancel </v-button>
+          <v-button :disabled="!filterName" @click="saveFilter"> Save </v-button>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -102,8 +94,9 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { useApi, useStores } from '@directus/extensions-sdk';
+import { useStores } from '@directus/extensions-sdk';
 import { useI18n } from 'vue-i18n';
+import { useTableApi } from './composables/api';
 
 // Props from layout state
 const props = defineProps<{
@@ -114,6 +107,7 @@ const props = defineProps<{
   search?: string;
   layoutOptions?: any;
   layoutQuery?: any;
+  clearFilters?: () => void;
 }>();
 
 // Emits
@@ -121,7 +115,7 @@ const emit = defineEmits(['update:layoutOptions']);
 
 // Composables
 const { t } = useI18n();
-const api = useApi();
+const tableApi = useTableApi();
 const { useNotificationsStore } = useStores();
 const notificationsStore = useNotificationsStore();
 
@@ -138,7 +132,7 @@ const colorOptions = [
   { text: 'Success (Green)', value: 'success' },
   { text: 'Warning (Orange)', value: 'warning' },
   { text: 'Danger (Red)', value: 'danger' },
-  { text: 'Info (Light Blue)', value: 'info' }
+  { text: 'Info (Light Blue)', value: 'info' },
 ];
 
 const hasSelection = computed(() => props.selection && props.selection.length > 0);
@@ -147,32 +141,29 @@ const hasNativeFilter = computed(() => {
   if (!props.filter || typeof props.filter !== 'object') {
     return false;
   }
-  
+
   // Check if filter is empty object
   const filterKeys = Object.keys(props.filter);
   if (filterKeys.length === 0) {
     return false;
   }
-  
+
   // IGNORE DEFAULT FILTERS that are always present
   // "Status is not archived" is a common default filter
   if (filterKeys.length === 1) {
     // Check for status != archived filter (default in many collections)
-    if (props.filter.status && 
-        props.filter.status._neq === 'archived') {
+    if (props.filter.status && props.filter.status._neq === 'archived') {
       return false; // This is just the default filter
     }
-    
+
     // Check for _and with only status filter
-    if (props.filter._and && 
-        Array.isArray(props.filter._and) && 
-        props.filter._and.length === 1) {
+    if (props.filter._and && Array.isArray(props.filter._and) && props.filter._and.length === 1) {
       const andFilter = props.filter._and[0];
       if (andFilter.status && andFilter.status._neq === 'archived') {
         return false; // Default filter wrapped in _and
       }
     }
-    
+
     // Empty _and or _or
     if (props.filter._and && Array.isArray(props.filter._and) && props.filter._and.length === 0) {
       return false;
@@ -181,21 +172,21 @@ const hasNativeFilter = computed(() => {
       return false;
     }
   }
-  
+
   // Check if it's ONLY the archived filter in a more complex structure
   if (props.filter._and && Array.isArray(props.filter._and)) {
-    const nonArchivedFilters = props.filter._and.filter(f => {
+    const nonArchivedFilters = props.filter._and.filter((f: any) => {
       // Filter out status != archived
       if (f.status && f.status._neq === 'archived') return false;
       return true;
     });
-    
+
     // If after removing archived filter, nothing is left, no real filter
     if (nonArchivedFilters.length === 0) {
       return false;
     }
   }
-  
+
   // Has real filter conditions beyond the default
   return true;
 });
@@ -209,26 +200,24 @@ const canDuplicate = computed(() => {
 
 const duplicateTooltip = computed(() => {
   const count = props.selection?.length || 0;
-  return count === 1 
-    ? 'Duplicate item'
-    : `Duplicate ${count} items`;
+  return count === 1 ? 'Duplicate item' : `Duplicate ${count} items`;
 });
 
 // Helper functions for color selector
 function getColorValue(colorName: string): string {
   const colorMap: Record<string, string> = {
-    'primary': 'var(--primary)',
-    'gray': '#6c757d',  // Bootstrap gray - works in both light and dark themes
-    'success': 'var(--success)',
-    'warning': 'var(--warning)',
-    'danger': 'var(--danger)',
-    'info': 'var(--info)'
+    primary: 'var(--primary)',
+    gray: '#6c757d', // Bootstrap gray - works in both light and dark themes
+    success: 'var(--success)',
+    warning: 'var(--warning)',
+    danger: 'var(--danger)',
+    info: 'var(--info)',
   };
   return colorMap[colorName] || 'var(--primary)';
 }
 
 function getColorLabel(colorName: string): string {
-  const option = colorOptions.find(opt => opt.value === colorName);
+  const option = colorOptions.find((opt) => opt.value === colorName);
   return option ? option.text : 'Primary (Blue)';
 }
 
@@ -236,17 +225,17 @@ function getColorLabel(colorName: string): string {
 function fixIconMenuScroll() {
   // Use multiple timeouts to catch the menu at different stages of rendering
   const delays = [0, 50, 100, 200, 300];
-  
-  delays.forEach(delay => {
+
+  delays.forEach((delay) => {
     setTimeout(() => {
       // Find all v-menu-content elements
       const menus = document.querySelectorAll('.v-menu-content');
-      
-      menus.forEach(menu => {
+
+      menus.forEach((menu) => {
         // Check if this menu has icons (is an icon selector)
         if (menu.querySelector('.icons')) {
           const menuEl = menu as HTMLElement;
-          
+
           // Force the styles with inline style
           menuEl.style.cssText = `
             max-height: 400px !important;
@@ -269,11 +258,11 @@ function openSaveFilterDialog() {
 
 async function saveFilter() {
   if (!filterName.value || !props.filter) return;
-  
+
   try {
     // Generate a unique ID for the new filter
     const newFilterId = `filter-${Date.now()}`;
-    
+
     // Create the filter preset object
     const newPreset = {
       id: newFilterId,
@@ -281,57 +270,53 @@ async function saveFilter() {
       filter: props.filter,
       icon: filterIcon.value,
       color: filterColor.value,
-      isPinned: true
+      isPinned: true,
     };
-    
+
     // Update layoutOptions with the new filter
     const currentFilters = props.layoutOptions?.quickFilters || [];
     const updatedOptions = {
       ...props.layoutOptions,
       quickFilters: [...currentFilters, newPreset],
-      activeQuickFilterId: newFilterId // Activate immediately
+      activeQuickFilterId: newFilterId, // Activate immediately
     };
-    
+
     // Emit the update to save in layoutOptions
     emit('update:layoutOptions', updatedOptions);
-    
-    // Also try to save to Directus presets API for backward compatibility
-    try {
-      await api.post('/presets', {
-        bookmark: filterName.value,
-        collection: props.collection,
-        layout: 'super-layout-table',
-        layout_query: {
-          filter: props.filter
-        }
-      });
-    } catch (apiError) {
-      console.warn('Failed to save to presets API (saved in layout):', apiError);
+
+    // Clear the native filters after saving as quick filter
+    if (props.clearFilters) {
+      props.clearFilters();
     }
-    
+
+    // Note: We only save to layoutOptions, not as Directus bookmarks
+    // Bookmarks should be created explicitly by the user
+
     notificationsStore.add({
       title: 'Quick Filter Saved',
-      text: `"${filterName.value}" has been saved and activated. Note: Native filter panel must be cleared manually.`,
+      text: `"${filterName.value}" has been saved and activated`,
       type: 'success',
     });
-    
+
     saveDialogActive.value = false;
-    
+
     // Emit event to notify the layout
-    window.dispatchEvent(new CustomEvent('quick-filter-saved', {
-      detail: { 
-        collection: props.collection,
-        name: filterName.value,
-        filterId: newFilterId,
-        filter: props.filter,
-        activateFilter: true,
-        clearNativeFilter: false  // Cannot clear native filter - Directus limitation
-      }
-    }));
-  } catch (error: any) {
+    window.dispatchEvent(
+      new CustomEvent('quick-filter-saved', {
+        detail: {
+          collection: props.collection,
+          name: filterName.value,
+          filterId: newFilterId,
+          filter: props.filter,
+          activateFilter: true,
+          clearNativeFilter: true, // We now clear native filters automatically
+        },
+      })
+    );
+  } catch (error) {
     notificationsStore.add({
       title: t('error'),
-      text: error.message || 'Failed to save filter',
+      text: (error as any).message || 'Failed to save filter',
       type: 'error',
     });
   }
@@ -359,92 +344,33 @@ async function duplicateSelectedItems() {
 
   // Default to 'id' if primaryKeyField is not provided
   const primaryKey = props.primaryKeyField || 'id';
-  
-  try {
-    for (const itemId of props.selection) {
-      // Step 1: Get original item WITH all relations (especially translations)
-      const response = await api.get(`/items/${props.collection}/${itemId}`, {
-        params: {
-          fields: '*,translations.*' // Include translations and other O2M relations
-        }
-      });
-      const originalItem = response.data?.data || response.data;
-      
-      if (!originalItem) {
-        throw new Error(`Item ${itemId} not found`);
-      }
-      
-      // Step 2: Separate relations from main item data
-      const { 
-        [primaryKey]: id,
-        translations,
-        date_created,
-        date_updated,
-        user_created,
-        user_updated,
-        ...mainItemData 
-      } = originalItem;
-      
-      // Step 3: Create the main item WITHOUT relations first
-      const newItemResponse = await api.post(`/items/${props.collection}`, mainItemData);
-      const newItem = newItemResponse.data?.data || newItemResponse.data;
-      const newItemId = newItem[primaryKey] || newItem.id;
-      
-      // Step 4: Handle O2M translations specifically
-      if (translations && Array.isArray(translations) && translations.length > 0) {
-        // Determine the foreign key field name (usually collection_id)
-        const foreignKeyField = `${props.collection}_id`;
-        
-        // Create new translation entries for the duplicated item
-        for (const translation of translations) {
-          // Remove the translation's own ID and system fields
-          const {
-            id: translationId,
-            date_created: tDateCreated,
-            date_updated: tDateUpdated,
-            user_created: tUserCreated,
-            user_updated: tUserUpdated,
-            ...translationData
-          } = translation;
-          
-          // Create new translation linked to the new parent item
-          try {
-            await api.post(`/items/${props.collection}_translations`, {
-              ...translationData,
-              [foreignKeyField]: newItemId // Link to new parent
-            });
-          } catch (translationError) {
-            console.warn(`Failed to duplicate translation:`, translationError);
-            // Continue with other translations even if one fails
-          }
-        }
-      }
-      
-      // Note: Other relation types can be handled here in the future
-      // - M2O: Usually kept as-is (e.g., author, category)
-      // - M2M: Could duplicate junction entries if needed
-      // - Other O2M: Decide case by case (e.g., comments might not be copied)
-    }
-    
-    notificationsStore.add({
-      title: 'Items duplicated',
-      text: `Successfully duplicated ${props.selection.length} item(s) with translations`,
-      type: 'success',
-    });
 
-    // Emit event to refresh the table without page reload
-    window.dispatchEvent(new CustomEvent('directus-items-duplicated', {
-      detail: { 
-        collection: props.collection,
-        count: props.selection.length 
-      }
-    }));
-  } catch (error: any) {
-    console.error('Error duplicating items:', error);
-    throw error;
+  for (const itemId of props.selection) {
+    // Use tableApi to duplicate with translations
+    await tableApi.duplicateItemWithTranslations(
+      props.collection,
+      itemId,
+      primaryKey,
+      true // include translations
+    );
   }
-}
 
+  notificationsStore.add({
+    title: 'Items duplicated',
+    text: `Successfully duplicated ${props.selection.length} item(s) with translations`,
+    type: 'success',
+  });
+
+  // Emit event to refresh the table without page reload
+  window.dispatchEvent(
+    new CustomEvent('directus-items-duplicated', {
+      detail: {
+        collection: props.collection,
+        count: props.selection.length,
+      },
+    })
+  );
+}
 </script>
 
 <style scoped>
@@ -479,12 +405,7 @@ async function duplicateSelectedItems() {
   transform: translateY(-50%);
   width: 12px;
   height: 2px;
-  background: linear-gradient(
-    to right,
-    var(--primary-75),
-    var(--primary-50),
-    var(--primary-25)
-  );
+  background: linear-gradient(to right, var(--primary-75), var(--primary-50), var(--primary-25));
   pointer-events: none;
 }
 
@@ -561,7 +482,9 @@ async function duplicateSelectedItems() {
 
 .color-circle.active {
   border-color: var(--foreground-normal);
-  box-shadow: 0 0 0 3px var(--background-normal), 0 0 0 5px var(--border-normal);
+  box-shadow:
+    0 0 0 3px var(--background-normal),
+    0 0 0 5px var(--border-normal);
 }
 
 .color-circle .check-icon {
@@ -575,5 +498,4 @@ async function duplicateSelectedItems() {
   color: var(--foreground-subdued);
   text-align: center;
 }
-
 </style>

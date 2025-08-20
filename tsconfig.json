@@ -1,0 +1,38 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "jsx": "preserve",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "skipLibCheck": true,
+    "types": [
+      "node",
+      "@directus/types"
+    ],
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "baseUrl": "."
+  },
+  "include": [
+    "index.ts",
+    "src/**/*.ts",
+    "src/**/*.vue",
+    "src/**/*.d.ts",
+    "vue-i18n.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "playwright-tools"
+  ]
+}
