@@ -200,7 +200,7 @@
                 :class="[
                   'quick-filter-button',
                   `color-${presetToDelete.color || 'primary'}`,
-                  'preview-only'
+                  'preview-only',
                 ]"
                 secondary
                 small
