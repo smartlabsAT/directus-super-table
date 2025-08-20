@@ -328,11 +328,6 @@ const hasMorePresets = computed(() => {
   return hiddenPresets.value.length > 0;
 });
 
-// Has active filters - currently unused
-// const hasActiveFilters = computed(() => {
-//   return props.currentFilter && Object.keys(props.currentFilter).length > 0;
-// });
-
 const hasNativeFilters = computed(() => {
   return props.nativeFilter && Object.keys(props.nativeFilter).length > 0;
 });
@@ -345,15 +340,6 @@ function isPresetActive(presetId: string): boolean {
 function togglePreset(preset: FilterPreset) {
   emit('toggle-preset', preset);
 }
-
-// Open save dialog - currently unused
-// function openSaveDialog() {
-//   saveDialogActive.value = true;
-//   newPresetName.value = '';
-//   newPresetDescription.value = '';
-//   newPresetPinned.value = true;
-//   newPresetShared.value = false;
-// }
 
 function savePreset() {
   if (!newPresetName.value) return;

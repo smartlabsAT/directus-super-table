@@ -1,5 +1,6 @@
 import { computed, Ref } from 'vue';
 import type { LayoutQuery } from '../types/table.types';
+import { PER_PAGE_OPTIONS, DEFAULT_PAGE_SIZE } from '../constants/pagination';
 
 export function useTablePagination(layoutQuery: Ref<LayoutQuery>) {
   const page = computed({
@@ -16,7 +17,7 @@ export function useTablePagination(layoutQuery: Ref<LayoutQuery>) {
 
   const limit = computed({
     get() {
-      return layoutQuery.value?.limit || 100;
+      return layoutQuery.value?.limit || DEFAULT_PAGE_SIZE;
     },
     set(newLimit: number) {
       layoutQuery.value = {
@@ -28,14 +29,7 @@ export function useTablePagination(layoutQuery: Ref<LayoutQuery>) {
   });
 
   // Available page size options
-  const pageSizeOptions = [
-    { text: '10', value: 10 },
-    { text: '25', value: 25 },
-    { text: '50', value: 50 },
-    { text: '100', value: 100 },
-    { text: '250', value: 250 },
-    { text: '500', value: 500 },
-  ];
+  const pageSizeOptions = PER_PAGE_OPTIONS;
 
   return {
     page,

@@ -8,38 +8,30 @@ interface Sort {
 }
 
 export function useTableSort(layoutQuery: Ref<LayoutQuery>) {
+  // Helper function to clean language suffixes from sort field
+  function cleanSortItem(sortItem: string): string {
+    if (sortItem.includes(':')) {
+      // Remove language suffix but keep the desc prefix if present
+      if (sortItem.startsWith('-')) {
+        const field = sortItem.substring(1).split(':')[0];
+        return `-${field}`;
+      } else {
+        return sortItem.split(':')[0];
+      }
+    }
+    return sortItem;
+  }
+
   // Clean up language suffixes from sort fields
   const sort = computed({
     get() {
       const rawSort = layoutQuery.value?.sort || [];
       // Clean up any language suffixes from sort fields
-      return rawSort.map((sortItem: string) => {
-        if (sortItem.includes(':')) {
-          // Remove language suffix but keep the desc prefix if present
-          if (sortItem.startsWith('-')) {
-            const field = sortItem.substring(1).split(':')[0];
-            return `-${field}`;
-          } else {
-            return sortItem.split(':')[0];
-          }
-        }
-        return sortItem;
-      });
+      return rawSort.map(cleanSortItem);
     },
     set(newSort: string[]) {
       // Clean sort values before saving
-      const cleanedSort = newSort.map((sortItem: string) => {
-        if (sortItem.includes(':')) {
-          // Remove language suffix but keep the desc prefix if present
-          if (sortItem.startsWith('-')) {
-            const field = sortItem.substring(1).split(':')[0];
-            return `-${field}`;
-          } else {
-            return sortItem.split(':')[0];
-          }
-        }
-        return sortItem;
-      });
+      const cleanedSort = newSort.map(cleanSortItem);
 
       layoutQuery.value = {
         ...layoutQuery.value,

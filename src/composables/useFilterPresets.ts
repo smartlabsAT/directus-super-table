@@ -1,9 +1,7 @@
 import { ref, computed, Ref, watch } from 'vue';
-import { useStores } from '@directus/extensions-sdk';
 import { Filter } from '@directus/types';
 import type { LayoutOptions, QuickFilter } from '../types/table.types';
 import type { FilterPreset } from '../types/filter.types';
-import { useTableApi } from './api';
 
 export interface FilterChip {
   id: string;
@@ -21,10 +19,6 @@ export function useFilterPresets(
   layoutOptions: Ref<LayoutOptions | undefined>,
   emit: (event: string, ...args: any[]) => void
 ) {
-  const tableApi = useTableApi();
-  const { useUserStore } = useStores();
-  const userStore = useUserStore();
-
   // State - now derived from layoutOptions
   const quickFilters = ref<Filter>({});
   const manualFilters = ref<Filter>({});

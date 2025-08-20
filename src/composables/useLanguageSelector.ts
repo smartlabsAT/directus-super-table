@@ -1,11 +1,8 @@
 import { ref, computed } from 'vue';
 import { useStores } from '@directus/extensions-sdk';
 import { useTableApi } from './api';
-
-export interface Language {
-  code: string;
-  name: string;
-}
+import type { Language } from '../types/table.types';
+import { DEFAULT_LANGUAGES, DEFAULT_LANGUAGE_CODE } from '../constants/languages';
 
 export function useLanguageSelector() {
   const tableApi = useTableApi();
@@ -17,7 +14,7 @@ export function useLanguageSelector() {
   const loadingLanguages = ref(false);
 
   // Selected language - default to user's language
-  const selectedLanguage = ref<string>(userStore.currentUser?.language || 'en-US');
+  const selectedLanguage = ref<string>(userStore.currentUser?.language || DEFAULT_LANGUAGE_CODE);
 
   // Fetch available languages from Directus
   async function fetchLanguages() {
@@ -30,22 +27,12 @@ export function useLanguageSelector() {
       if (languageData) {
         languages.value = languageData;
       } else {
-        // Fallback to common languages if languages collection doesn't exist
-        languages.value = [
-          { code: 'en-US', name: 'English' },
-          { code: 'de-DE', name: 'Deutsch' },
-          { code: 'fr-FR', name: 'Français' },
-          { code: 'es-ES', name: 'Español' },
-        ];
+        // Fallback to default languages if languages collection doesn't exist
+        languages.value = DEFAULT_LANGUAGES.slice(0, 4); // Use first 4 languages
       }
     } catch {
-      // Fallback to common languages on error
-      languages.value = [
-        { code: 'en-US', name: 'English' },
-        { code: 'de-DE', name: 'Deutsch' },
-        { code: 'fr-FR', name: 'Français' },
-        { code: 'es-ES', name: 'Español' },
-      ];
+      // Fallback to default languages on error
+      languages.value = DEFAULT_LANGUAGES.slice(0, 4); // Use first 4 languages
     } finally {
       loadingLanguages.value = false;
     }

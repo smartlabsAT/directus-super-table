@@ -239,18 +239,7 @@
 
       <div class="per-page">
         <span>{{ t('per_page') }}:</span>
-        <v-select
-          v-model="limit"
-          :items="[
-            { text: '25', value: 25 },
-            { text: '50', value: 50 },
-            { text: '100', value: 100 },
-            { text: '250', value: 250 },
-            { text: '500', value: 500 },
-            { text: '1000', value: 1000 },
-          ]"
-          inline
-        />
+        <v-select v-model="limit" :items="perPageOptions" inline />
       </div>
     </div>
     <!-- Rename Field Dialog -->
@@ -292,6 +281,8 @@ import { useTableEdits } from './composables/useTableEdits';
 import { useTablePagination } from './composables/useTablePagination';
 import { useTableFields } from './composables/useTableFields';
 import { useFilterPresets } from './composables/useFilterPresets';
+import { PER_PAGE_OPTIONS } from './constants/pagination';
+import { DEFAULT_LANGUAGES } from './constants/languages';
 import EditableCellRelational from './components/EditableCellRelational.vue';
 import RenameFieldDialog from './components/RenameFieldDialog.vue';
 import QuickFilters from './components/QuickFilters.vue';
@@ -351,18 +342,14 @@ watch(
 // Language Selector - Only for fetching available languages
 const { languages, fetchLanguages } = useLanguageSelector();
 
+// Per page options for pagination
+const perPageOptions = PER_PAGE_OPTIONS;
+
 // Language items for v-select
 const languageItems = computed(() => {
   // If no languages loaded yet, use fallback
   if (!languages.value || languages.value.length === 0) {
-    const fallbackLangs = [
-      { code: 'de-DE', name: 'Deutsch' },
-      { code: 'en-US', name: 'English' },
-      { code: 'fr-FR', name: 'Français' },
-      { code: 'es-ES', name: 'Español' },
-      { code: 'it-IT', name: 'Italiano' },
-    ];
-    return fallbackLangs.map((lang) => ({
+    return DEFAULT_LANGUAGES.map((lang) => ({
       text: lang.name,
       value: lang.code,
     }));
@@ -453,8 +440,6 @@ const fieldsWithRelational = computed(() => {
 
   return adjustedFields;
 });
-
-// Get all fields including aliased ones - currently unused
 
 // Table headers with relational field support
 // Helper function to get translation field metadata
@@ -1021,27 +1006,6 @@ watch(
   { immediate: true }
 );
 
-// Filter removal handlers - currently unused
-// function removeFilter(filter: any) {
-//   if (filter.source === 'quick') {
-//     removeQuickFilter(filter);
-//   } else {
-//     removeManualFilter(filter);
-//   }
-// }
-
-// Clear all filters including native filter interface - currently unused
-// async function clearAllFilters() {
-//   // Clear our preset filters
-//   clearAllPresetFilters();
-//
-//   // Clear search
-//   searchQuery.value = '';
-//
-//   // Clear native filter interface by updating URL
-//   await clearNativeFilter();
-// }
-
 // Selection
 const selectionWritable = computed({
   get: () => selection.value || [],
@@ -1108,7 +1072,7 @@ function handleTableRowClick({ item, event }: { item: Item; event: MouseEvent })
   }
 
   const target = event?.target as HTMLElement;
-  
+
   // Only block navigation for actual interactive elements when not in edit mode
   // Allow clicks on regular cells to navigate
   if (
@@ -1138,15 +1102,6 @@ function handleItemsDuplicated() {
   // Clear selection after successful duplication
   selection.value = [];
 }
-
-// Handle items deleted event - currently unused
-// async function handleItemsDeleted(deletedIds?: any[]) {
-//   // Clear selection
-//   selection.value = [];
-//
-//   // Refresh from server
-//   await getItems();
-// }
 
 // Setup event listeners for cross-component communication
 onMounted(() => {
