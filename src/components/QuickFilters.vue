@@ -194,14 +194,22 @@
       <v-card>
         <v-card-title>Delete Quick Filter</v-card-title>
         <v-card-text>
-          <v-notice type="danger"> Are you sure you want to delete this filter? </v-notice>
-          <div v-if="presetToDelete" class="filter-name">
-            <strong>{{ presetToDelete.name }}</strong>
-          </div>
-          <div v-if="presetToDelete && isPresetActive(presetToDelete.id)" class="active-warning">
-            <v-icon name="warning" />
-            <span>This filter is currently active and will be deactivated.</span>
-          </div>
+          <v-notice type="danger">
+            <div v-if="presetToDelete" class="filter-preview-inline">
+              <v-button
+                :class="[
+                  'quick-filter-button',
+                  `color-${presetToDelete.color || 'primary'}`,
+                  'preview-only'
+                ]"
+                secondary
+                small
+              >
+                <v-icon v-if="presetToDelete.icon" :name="presetToDelete.icon" small />
+                {{ presetToDelete.name }}
+              </v-button>
+            </div>
+          </v-notice>
         </v-card-text>
         <v-card-actions>
           <v-button secondary @click="cancelDelete"> Cancel </v-button>
@@ -695,27 +703,14 @@ function getColorLabel(colorName: string): string {
 }
 
 /* Delete dialog styling */
-.filter-name {
-  margin-top: 12px;
-  margin-bottom: 12px;
-  font-size: 16px;
-  text-align: center;
-}
-
-.active-warning {
+.filter-preview-inline {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 16px;
-  padding: 12px;
-  background-color: var(--warning-10);
-  color: var(--warning);
-  border-radius: var(--border-radius);
-  font-size: 14px;
+  justify-content: center;
 }
 
-.active-warning v-icon {
-  --v-icon-color: var(--warning);
+.filter-preview-inline .quick-filter-button.preview-only {
+  pointer-events: none;
+  cursor: default;
 }
 
 /* Context Menu Edit Styles */
