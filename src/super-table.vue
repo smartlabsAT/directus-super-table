@@ -56,7 +56,7 @@
       :sort="tableSort"
       :items="items"
       :loading="loading"
-      :item-key="primaryKeyField.field || 'id'"
+      :item-key="primaryKeyField?.value?.field || 'id'"
       :show-manual-sort="sortAllowed"
       :manual-sort-key="sortField?.value || null"
       allow-header-reorder
@@ -203,16 +203,15 @@
           :item="item"
           :field-key="header.value"
           :field="header.field"
-          :edits="edits[item[primaryKeyField.field || 'id']]?.[header.value]"
+          :edits="edits[item[primaryKeyField?.value?.field || 'id']]?.[header.value]"
           :get-display-value="getFromAliasedItem"
-          :saving="savingCells[`${item[primaryKeyField.field || 'id']}_${header.value}`]"
+          :saving="savingCells[`${item[primaryKeyField?.value?.field || 'id']}_${header.value}`]"
           :edit-mode="editMode"
           :align="header.align"
           @update="updateFieldValue"
           @save="autoSaveEdits"
         />
       </template>
-
     </v-table>
 
     <!-- Empty State when no items and not loading -->
@@ -438,7 +437,7 @@ const fieldsWithRelational = computed(() => {
   const adjustedFields: string[] = adjustFieldsForDisplays(uniqueFields, props.collection);
 
   // CRITICAL: Always include the primary key field for navigation and identification
-  const pkField = primaryKeyField.field || 'id';
+  const pkField = primaryKeyField?.value?.field || 'id';
   if (!adjustedFields.includes(pkField)) {
     adjustedFields.unshift(pkField); // Add at the beginning
   }
@@ -967,7 +966,7 @@ function onToggleSelectAll() {
       selection.value = [];
     } else {
       // Select all - use keys since we have selection-use-keys
-      selection.value = items.value.map((item) => item[primaryKeyField.field || 'id']);
+      selection.value = items.value.map((item) => item[primaryKeyField?.value?.field || 'id']);
     }
   }
 }
@@ -1026,9 +1025,11 @@ const selectionWritable = computed({
 
 // Check if we have active filters or search
 const hasActiveFilters = computed(() => {
-  return activePresetIds.value.length > 0 || 
-         (filter.value && Object.keys(filter.value).length > 0) ||
-         (search.value && search.value.length > 0);
+  return (
+    activePresetIds.value.length > 0 ||
+    (filter.value && Object.keys(filter.value).length > 0) ||
+    (search.value && search.value.length > 0)
+  );
 });
 
 // Clear all filters and search (like in original Directus)
@@ -1037,10 +1038,10 @@ function clearAllFilters() {
   if (props.clearFilters) {
     props.clearFilters();
   }
-  
+
   // Clear our local search query
   searchQuery.value = '';
-  
+
   // Clear active quick filter presets
   if (activePresetIds.value.length > 0) {
     activePresetIds.value = [];
@@ -1095,9 +1096,9 @@ function toPage(newPage: number) {
 
 function editItem(item: Item) {
   // Get the primary key field name directly (no .value needed as per Directus pattern)
-  const pkField = primaryKeyField.field || 'id';
+  const pkField = primaryKeyField?.value?.field || 'id';
   const primaryKey = item[pkField];
-  
+
   if (!primaryKey) {
     console.warn('No primary key found:', { item, pkField, primaryKeyField });
     notificationsStore.add({
@@ -1107,7 +1108,7 @@ function editItem(item: Item) {
     });
     return;
   }
-  
+
   router.push(`/content/${collection.value}/${primaryKey}`);
 }
 
