@@ -363,7 +363,7 @@ function navigateToPrevCell() {
   min-height: 42px;
   padding: 8px 12px;
   cursor: default;
-  opacity: 0.8;
+  /* Removed opacity: 0.8 - content should be fully visible */
   display: flex;
   align-items: center;
   overflow: hidden;

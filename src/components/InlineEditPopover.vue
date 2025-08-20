@@ -1061,7 +1061,7 @@ onUnmounted(() => {
 }
 
 .edit-cell.non-editable {
-  opacity: 0.7;
+  /* Removed opacity: 0.7 - content should be fully visible even when not editable */
   cursor: default;
 }
 

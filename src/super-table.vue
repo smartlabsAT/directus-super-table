@@ -1507,6 +1507,21 @@ v-icon.edit-toggle.active {
   text-align: inherit !important;
 }
 
+/* Prevent opacity changes during column resizing */
+.table :deep(.resizing),
+.table :deep(.resizing *),
+.table :deep(th.resizing),
+.table :deep(td.resizing) {
+  opacity: 1 !important;
+}
+
+/* Ensure content stays fully visible during interactions */
+.table :deep(tbody td),
+.table :deep(tbody td .cell),
+.table :deep(tbody td .cell > *) {
+  opacity: 1 !important;
+}
+
 /* Select fields alignment - override default styles */
 .table :deep(.display-labels),
 .table :deep(.display-color),
