@@ -17,7 +17,7 @@ importers:
     devDependencies:
       '@directus/extensions-sdk':
         specifier: ^11.0.0
-        version: 11.0.10(@types/node@24.3.0)(@unhead/vue@1.11.20(vue@3.5.18(typescript@5.9.2)))(knex@3.1.0)(pinia@2.3.1(typescript@5.9.2)(vue@3.5.18(typescript@5.9.2)))(terser@5.43.1)(typescript@5.9.2)
+        version: 11.0.10(@types/node@24.3.0)(@unhead/vue@1.11.20(vue@3.5.18(typescript@5.9.2)))(knex@3.1.0)(pinia@2.3.1(typescript@5.9.2)(vue@3.5.18(typescript@5.9.2)))(terser@5.43.1)(typescript@5.9.2)(vue-router@4.5.1(vue@3.5.18(typescript@5.9.2)))
       '@directus/types':
         specifier: ^11.0.0
         version: 11.2.1(knex@3.1.0)(vue@3.5.18(typescript@5.9.2))
@@ -72,6 +72,9 @@ importers:
       vue-eslint-parser:
         specifier: ^10.2.0
         version: 10.2.0(eslint@9.33.0)
+      vue-router:
+        specifier: ^4.5.1
+        version: 4.5.1(vue@3.5.18(typescript@5.9.2))
       vue-tsc:
         specifier: ^3.0.5
         version: 3.0.5(typescript@5.9.2)
@@ -2350,6 +2353,11 @@ packages:
     peerDependencies:
       eslint: ^8.57.0 || ^9.0.0
 
+  vue-router@4.5.1:
+    resolution: {integrity: sha512-ogAF3P97NPm8fJsE4by9dwSYtDwXIY1nFY9T6DyQnGHd1E2Da94w9JIolpe42LJGIl0DwOHBi8TcRPlPGwbTtw==}
+    peerDependencies:
+      vue: ^3.2.0
+
   vue-tsc@3.0.5:
     resolution: {integrity: sha512-PsTFN9lo1HJCrZw9NoqjYcAbYDXY0cOKyuW2E7naX5jcaVyWpqEsZOHN9Dws5890E8e5SDAD4L4Zam3dxG3/Cw==}
     hasBin: true
@@ -2449,11 +2457,11 @@ snapshots:
 
   '@directus/constants@13.0.2': {}
 
-  '@directus/extensions-sdk@11.0.10(@types/node@24.3.0)(@unhead/vue@1.11.20(vue@3.5.18(typescript@5.9.2)))(knex@3.1.0)(pinia@2.3.1(typescript@5.9.2)(vue@3.5.18(typescript@5.9.2)))(terser@5.43.1)(typescript@5.9.2)':
+  '@directus/extensions-sdk@11.0.10(@types/node@24.3.0)(@unhead/vue@1.11.20(vue@3.5.18(typescript@5.9.2)))(knex@3.1.0)(pinia@2.3.1(typescript@5.9.2)(vue@3.5.18(typescript@5.9.2)))(terser@5.43.1)(typescript@5.9.2)(vue-router@4.5.1(vue@3.5.18(typescript@5.9.2)))':
     dependencies:
       '@directus/composables': 10.1.16(vue@3.4.27(typescript@5.9.2))
       '@directus/constants': 11.0.4
-      '@directus/extensions': 1.0.10(@unhead/vue@1.11.20(vue@3.5.18(typescript@5.9.2)))(knex@3.1.0)(pinia@2.3.1(typescript@5.9.2)(vue@3.5.18(typescript@5.9.2)))(vue@3.4.27(typescript@5.9.2))
+      '@directus/extensions': 1.0.10(@unhead/vue@1.11.20(vue@3.5.18(typescript@5.9.2)))(knex@3.1.0)(pinia@2.3.1(typescript@5.9.2)(vue@3.5.18(typescript@5.9.2)))(vue-router@4.5.1(vue@3.5.18(typescript@5.9.2)))(vue@3.4.27(typescript@5.9.2))
       '@directus/themes': 0.3.11(@unhead/vue@1.11.20(vue@3.5.18(typescript@5.9.2)))(pinia@2.3.1(typescript@5.9.2)(vue@3.5.18(typescript@5.9.2)))(vue@3.4.27(typescript@5.9.2))
       '@directus/types': 11.2.1(knex@3.1.0)(vue@3.4.27(typescript@5.9.2))
       '@directus/utils': 11.0.11(vue@3.4.27(typescript@5.9.2))
@@ -2500,7 +2508,7 @@ snapshots:
       - typescript
       - vue-router
 
-  '@directus/extensions@1.0.10(@unhead/vue@1.11.20(vue@3.5.18(typescript@5.9.2)))(knex@3.1.0)(pinia@2.3.1(typescript@5.9.2)(vue@3.5.18(typescript@5.9.2)))(vue@3.4.27(typescript@5.9.2))':
+  '@directus/extensions@1.0.10(@unhead/vue@1.11.20(vue@3.5.18(typescript@5.9.2)))(knex@3.1.0)(pinia@2.3.1(typescript@5.9.2)(vue@3.5.18(typescript@5.9.2)))(vue-router@4.5.1(vue@3.5.18(typescript@5.9.2)))(vue@3.4.27(typescript@5.9.2))':
     dependencies:
       '@directus/constants': 11.0.4
       '@directus/themes': 0.3.11(@unhead/vue@1.11.20(vue@3.5.18(typescript@5.9.2)))(pinia@2.3.1(typescript@5.9.2)(vue@3.5.18(typescript@5.9.2)))(vue@3.4.27(typescript@5.9.2))
@@ -2513,6 +2521,7 @@ snapshots:
     optionalDependencies:
       knex: 3.1.0
       vue: 3.4.27(typescript@5.9.2)
+      vue-router: 4.5.1(vue@3.5.18(typescript@5.9.2))
     transitivePeerDependencies:
       - '@unhead/vue'
       - better-sqlite3
@@ -4705,6 +4714,11 @@ snapshots:
       semver: 7.7.2
     transitivePeerDependencies:
       - supports-color
+
+  vue-router@4.5.1(vue@3.5.18(typescript@5.9.2)):
+    dependencies:
+      '@vue/devtools-api': 6.6.4
+      vue: 3.5.18(typescript@5.9.2)
 
   vue-tsc@3.0.5(typescript@5.9.2):
     dependencies:
