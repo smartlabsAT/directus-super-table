@@ -224,7 +224,6 @@
           />
         </div>
 
-
         <!-- Auto-save indicator (only show if autoSave is actually enabled) -->
         <div class="auto-save-status" v-if="autoSave && hasChanges">
           <v-icon name="fiber_manual_record" x-small class="pulse" />
@@ -243,19 +242,19 @@
     >
       <!-- Action buttons in drawer header (native Directus pattern) -->
       <template #actions>
-        <v-button 
-          v-tooltip.bottom="'Clear selection'" 
-          icon 
-          rounded 
+        <v-button
+          v-tooltip.bottom="'Clear selection'"
+          icon
+          rounded
           secondary
           @click="clearFileSelection"
         >
           <v-icon name="delete_outline" />
         </v-button>
-        <v-button 
-          v-tooltip.bottom="'Select file'" 
-          icon 
-          rounded 
+        <v-button
+          v-tooltip.bottom="'Select file'"
+          icon
+          rounded
           :disabled="!selectedFileId"
           @click="confirmFileSelection"
         >
@@ -273,93 +272,92 @@
         <div class="drawer-content">
           <!-- Inline file browser implementation -->
           <div class="file-browser-inline">
-          <!-- Custom Breadcrumb (v-breadcrumb is router-coupled) -->
-          <nav class="directus-breadcrumb" aria-label="Breadcrumb">
-            <ol class="breadcrumb-list">
-              <!-- Root/File Library -->
-              <li class="breadcrumb-item">
-                <button type="button" class="breadcrumb-link" @click="navigateToFolder(null)">
-                  <v-icon name="folder_special" x-small />
-                  File Library
-                </button>
-              </li>
+            <!-- Custom Breadcrumb (v-breadcrumb is router-coupled) -->
+            <nav class="directus-breadcrumb" aria-label="Breadcrumb">
+              <ol class="breadcrumb-list">
+                <!-- Root/File Library -->
+                <li class="breadcrumb-item">
+                  <button type="button" class="breadcrumb-link" @click="navigateToFolder(null)">
+                    <v-icon name="folder_special" x-small />
+                    File Library
+                  </button>
+                </li>
 
-              <!-- Folder Path -->
-              <li
-                v-for="(folder, index) in folderPath"
-                :key="folder.id"
-                class="breadcrumb-item"
-                :class="{ active: index === folderPath.length - 1 }"
-              >
-                <button
-                  v-if="index < folderPath.length - 1"
-                  type="button"
-                  class="breadcrumb-link"
-                  @click="navigateToFolder(folder.id)"
+                <!-- Folder Path -->
+                <li
+                  v-for="(folder, index) in folderPath"
+                  :key="folder.id"
+                  class="breadcrumb-item"
+                  :class="{ active: index === folderPath.length - 1 }"
                 >
-                  {{ folder.name }}
-                </button>
-                <span v-else class="breadcrumb-current">
-                  {{ folder.name }}
-                </span>
-              </li>
-            </ol>
-          </nav>
+                  <button
+                    v-if="index < folderPath.length - 1"
+                    type="button"
+                    class="breadcrumb-link"
+                    @click="navigateToFolder(folder.id)"
+                  >
+                    {{ folder.name }}
+                  </button>
+                  <span v-else class="breadcrumb-current">
+                    {{ folder.name }}
+                  </span>
+                </li>
+              </ol>
+            </nav>
 
-          <!-- Search -->
-          <div class="browser-search">
-            <v-input
-              v-model="fileSearchQuery"
-              placeholder="Search files..."
-              prepend-icon="search"
-              @input="searchFiles"
-            />
-          </div>
-
-          <!-- Loading -->
-          <v-progress-linear v-if="filesLoading" indeterminate />
-
-          <!-- Files and Folders Grid -->
-          <div v-else class="files-grid">
-            <!-- No content message -->
-            <div
-              v-if="availableFiles.length === 0 && availableFolders.length === 0"
-              class="no-files"
-            >
-              No files or folders found
+            <!-- Search -->
+            <div class="browser-search">
+              <v-input
+                v-model="fileSearchQuery"
+                placeholder="Search files..."
+                prepend-icon="search"
+                @input="searchFiles"
+              />
             </div>
 
-            <!-- Folders first -->
-            <div
-              v-for="folder in availableFolders"
-              :key="`folder-${folder.id}`"
-              class="file-item folder-item"
-              @click="navigateToFolder(folder.id)"
-            >
-              <div class="folder-icon">
-                <v-icon name="folder" large color="var(--primary)" />
-              </div>
-              <div class="file-name">{{ folder.name }}</div>
-            </div>
+            <!-- Loading -->
+            <v-progress-linear v-if="filesLoading" indeterminate />
 
-            <!-- Then files -->
-            <div
-              v-for="file in availableFiles"
-              :key="file.id"
-              class="file-item"
-              :class="{ selected: file.id === selectedFileId }"
-              @click="selectFile(file)"
-            >
-              <div v-if="file.type?.startsWith('image')" class="file-preview">
-                <img :src="getImageUrl(file.id)" :alt="file.title || file.filename_download" />
+            <!-- Files and Folders Grid -->
+            <div v-else class="files-grid">
+              <!-- No content message -->
+              <div
+                v-if="availableFiles.length === 0 && availableFolders.length === 0"
+                class="no-files"
+              >
+                No files or folders found
               </div>
-              <div v-else class="file-icon">
-                <v-icon name="insert_drive_file" large />
-              </div>
-              <div class="file-name">{{ file.title || file.filename_download }}</div>
-            </div>
-          </div>
 
+              <!-- Folders first -->
+              <div
+                v-for="folder in availableFolders"
+                :key="`folder-${folder.id}`"
+                class="file-item folder-item"
+                @click="navigateToFolder(folder.id)"
+              >
+                <div class="folder-icon">
+                  <v-icon name="folder" large color="var(--primary)" />
+                </div>
+                <div class="file-name">{{ folder.name }}</div>
+              </div>
+
+              <!-- Then files -->
+              <div
+                v-for="file in availableFiles"
+                :key="file.id"
+                class="file-item"
+                :class="{ selected: file.id === selectedFileId }"
+                @click="selectFile(file)"
+              >
+                <div v-if="file.type?.startsWith('image')" class="file-preview">
+                  <img :src="getImageUrl(file.id)" :alt="file.title || file.filename_download" />
+                </div>
+                <div v-else class="file-icon">
+                  <v-icon name="insert_drive_file" large />
+                </div>
+                <div class="file-name">{{ file.title || file.filename_download }}</div>
+              </div>
+            </div>
           </div>
         </div>
       </template>
@@ -456,7 +454,6 @@ const imageLoadError = ref(false);
 const showFileBrowser = ref(false);
 const hasEscapeHandler = ref(false); // Track if escape handler is added
 const popoverPlacement = ref<string>('bottom-start');
-const showDatePicker = ref(false);
 
 // File browser state
 const filesLoading = ref(false);
@@ -554,15 +551,20 @@ function handleCloseRequest(event: CustomEvent) {
 watch(menuActive, (active) => {
   if (active) {
     closeOtherPopovers(); // Close all other popovers first
-    
+
     // Calculate optimal placement for date pickers
-    if (cellRef.value && (props.interfaceType === 'date' || props.interfaceType === 'datetime' || 
-                          props.interfaceType === 'time' || props.interfaceType === 'timestamp')) {
+    if (
+      cellRef.value &&
+      (props.interfaceType === 'date' ||
+        props.interfaceType === 'datetime' ||
+        props.interfaceType === 'time' ||
+        props.interfaceType === 'timestamp')
+    ) {
       const rect = cellRef.value.getBoundingClientRect();
       const viewportHeight = window.innerHeight;
       const spaceBelow = viewportHeight - rect.bottom;
       const spaceAbove = rect.top;
-      
+
       // If less than 450px below and more space above, place on top
       if (spaceBelow < 450 && spaceAbove > 450) {
         popoverPlacement.value = 'top-start';
@@ -787,10 +789,10 @@ function handleDateTimeChange(value: any) {
   // Handle date/time value updates
   // Directus datetime interface returns ISO string or null
   localValue.value = value;
-  
+
   // Mark as changed so save button enables
   hasUnsavedChanges.value = true;
-  
+
   if (props.autoSave) {
     debouncedSave(value);
   }
@@ -1233,7 +1235,6 @@ onUnmounted(() => {
   min-height: 100px;
 }
 
-
 .auto-save-status {
   display: flex;
   align-items: center;
@@ -1322,7 +1323,6 @@ onUnmounted(() => {
   height: 100%;
   object-fit: cover;
 }
-
 
 /* Simplified file selector styles */
 .file-selector-container {
@@ -1571,7 +1571,6 @@ onUnmounted(() => {
   width: 100%;
   line-height: 1.2;
 }
-
 
 /* Override v-menu arrow to match cell */
 :global(.v-menu.v-menu--attached[data-popper-placement^='bottom'] .arrow) {
