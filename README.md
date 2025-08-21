@@ -13,7 +13,7 @@ A powerful and feature-rich table layout extension for Directus 11+ that enhance
 
 ## Version
 
-v0.2.6 - Stable release
+v0.2.7 - Stable release
 
 ## 🌟 Top Features
 

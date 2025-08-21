@@ -5,6 +5,19 @@ All notable changes to the Super Layout Table Extension will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.7] - 2025-08-22
+
+### Added
+- Direct Boolean Toggle option for single-click boolean field editing (Issue #16)
+- New BooleanToggleCell component with auto-save functionality
+- Layout option to enable/disable direct boolean editing
+- Demo GIF in README for better project visibility
+- .npmignore configuration to exclude demo assets from npm package
+
+### Changed
+- Boolean fields can now be toggled with a single click when Direct Boolean Toggle is enabled
+- Reduced interaction steps for boolean fields from 3 clicks to 1 click
+
 ## [0.2.6] - 2025-08-21
 
 ### Added
