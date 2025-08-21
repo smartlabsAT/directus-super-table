@@ -1,0 +1,52 @@
+# Development files
+node_modules/
+src/
+*.ts
+*.vue
+!dist/**/*
+
+# Documentation assets (keep them out of npm package)
+docs/
+demo/
+*.gif
+*.mp4
+*.mov
+screenshots/
+
+# Testing
+playwright-tools/
+test/
+tests/
+*.test.*
+*.spec.*
+
+# Build artifacts
+*.tar.gz
+*.zip
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.github/
+.gitignore
+
+# Config files (only dist is needed)
+tsconfig.json
+eslint.config.js
+.prettierrc
+vite.config.*
+rollup.config.*
+
+# Other
+CLAUDE.md
+TODO.md
+CHANGELOG.md
+release/

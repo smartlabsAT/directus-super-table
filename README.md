@@ -8,6 +8,9 @@
 
 A powerful and feature-rich table layout extension for Directus 11+ that enhances the default table view with advanced functionality including inline editing, quick filters, bookmarks, and custom cell rendering.
 
+
+![Super Table Demo](https://raw.githubusercontent.com/smartlabsAT/directus-super-table/main/demo/super-table-demo.gif)
+
 ## Version
 
 v0.2.6 - Stable release
