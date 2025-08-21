@@ -8,6 +8,14 @@
     <label class="type-label">Edit Mode</label>
     <v-checkbox v-model="editMode" label="Enable inline editing" />
   </div>
+
+  <div class="field" v-if="editMode">
+    <label class="type-label">Direct Boolean Toggle</label>
+    <v-checkbox 
+      v-model="directBooleanToggle" 
+      label="Enable direct boolean field editing (single-click toggle without popover)" 
+    />
+  </div>
 </template>
 
 <script lang="ts" setup>
@@ -18,6 +26,7 @@ interface LayoutOptions {
   showToolbar?: boolean;
   showSelect?: boolean;
   editMode?: boolean;
+  directBooleanToggle?: boolean;
   spacing?: 'compact' | 'cozy' | 'comfortable';
   quickFilters?: any[];
   customFieldNames?: Record<string, string>;
@@ -50,6 +59,16 @@ const editMode = computed({
     layoutOptions.value = {
       ...layoutOptions.value,
       editMode: val,
+    };
+  },
+});
+
+const directBooleanToggle = computed({
+  get: () => layoutOptions.value?.directBooleanToggle === true,
+  set: (val) => {
+    layoutOptions.value = {
+      ...layoutOptions.value,
+      directBooleanToggle: val,
     };
   },
 });

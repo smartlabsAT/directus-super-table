@@ -1,7 +1,19 @@
 <template>
-  <!-- Use InlineEditPopover for all non-relational fields (including date fields) -->
+  <!-- Use BooleanToggleCell for boolean fields when directBooleanToggle is enabled -->
+  <BooleanToggleCell
+    v-if="!isRelational && shouldUseBooleanToggle"
+    :model-value="displayValue"
+    :collection="item?.collection || field?.collection"
+    :primary-key="(item?.id || item?.[primaryKeyField]) ?? ''"
+    :field="actualFieldKey"
+    :disabled="!isFieldEditableComputed"
+    :readonly="!props.editMode"
+    @update:model-value="handleBooleanToggle"
+    @update:success="handleSave"
+  />
+  <!-- Use InlineEditPopover for all other non-relational fields (including date fields) -->
   <InlineEditPopover
-    v-if="!isRelational"
+    v-else-if="!isRelational"
     :value="displayValue"
     :field-key="actualFieldKey"
     :field-label="field?.name || actualFieldKey"
@@ -111,6 +123,7 @@
 import { computed } from 'vue';
 import type { Field, Item } from '@directus/types';
 import InlineEditPopover from './InlineEditPopover.vue';
+import BooleanToggleCell from './CellRenderers/BooleanToggleCell.vue';
 import SelectCell from './CellRenderers/SelectCell.vue';
 import StatusCell from './CellRenderers/StatusCell.vue';
 import ImageCell from './CellRenderers/ImageCell.vue';
@@ -128,6 +141,7 @@ const props = defineProps<{
   saving?: boolean;
   editMode?: boolean;
   align?: 'left' | 'center' | 'right';
+  directBooleanToggle?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -241,6 +255,17 @@ const fieldSupportLevel = computed(() => {
   return getFieldSupportLevel(props.field, actualFieldKey.value);
 });
 
+// Check if we should use BooleanToggleCell
+const shouldUseBooleanToggle = computed(() => {
+  return (
+    props.directBooleanToggle &&
+    props.editMode &&
+    (props.field?.type === 'boolean' || 
+     props.field?.interface === 'boolean' ||
+     props.field?.interface === 'toggle')
+  );
+});
+
 // Check if field is relational
 const isRelational = computed(() => {
   if (!props.field) return false;
@@ -339,8 +364,17 @@ function handleUpdate(value: any) {
   }
 }
 
-function handleSave(value: any) {
-  handleUpdate(value);
+function handleBooleanToggle(value: boolean) {
+  const primaryKey = Object.keys(props.item).find((key) => key === 'id' || key.endsWith('_id'));
+  if (primaryKey) {
+    emit('update', props.item[primaryKey], props.fieldKey, value);
+  }
+}
+
+function handleSave(value?: any) {
+  if (value !== undefined) {
+    handleUpdate(value);
+  }
   emit('save');
 }
 
