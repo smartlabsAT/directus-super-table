@@ -10,7 +10,7 @@ A powerful and feature-rich table layout extension for Directus 11+ that enhance
 
 ## Version
 
-v0.2.0 - Stable release
+v0.2.3 - Stable release
 
 ## 🌟 Top Features
 
@@ -130,11 +130,15 @@ Edit data directly in the table without opening a separate form:
    - Text fields: Simple input or WYSIWYG editor
    - Boolean: Checkbox toggle
    - Select: Dropdown menu
-   - Date/Time: Date picker
+   - Date/Time: Full date picker with calendar (✨ NEW in v0.2.3)
    - Color: Color picker
-   - Relations: File browser or relation picker
-3. **Saving**: Click save button or press Enter
-4. **Canceling**: Click cancel or press Escape
+   - Image/File: Advanced file browser with preview
+3. **Unified Header Actions** (✨ NEW in v0.2.3):
+   - Save/Cancel buttons now in popover header for all field types
+   - Consistent UI across all editors
+   - Icon-only buttons matching native Directus style
+4. **Saving**: Click save button (✓) or press Enter
+5. **Canceling**: Click cancel button (✗) or press Escape
 
 ### Column Management
 Customize which columns are displayed and how:
