@@ -9,6 +9,9 @@ jobs:
   release:
     name: Create Release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Required for creating releases and uploading assets
+      packages: write  # Required if publishing packages
     
     steps:
       - name: Checkout repository
