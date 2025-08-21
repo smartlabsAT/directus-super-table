@@ -16,11 +16,12 @@ export const SUPPORTED_FIELD_TYPES: Record<string, boolean | 'partial'> = {
   // JSON is partially supported (depends on interface)
   json: 'partial',
 
-  // Date/Time types are currently NOT supported (Issue #5)
-  date: false,
-  dateTime: false,
-  time: false,
-  timestamp: false,
+  // Date/Time types are now supported (Issue #5 fixed)
+  date: true,
+  dateTime: true,
+  datetime: true, // Both variants for compatibility
+  time: true,
+  timestamp: true,
 
   // File types are partially supported (Issue #9)
   uuid: 'partial', // Only when used with file interface
@@ -70,11 +71,11 @@ export const SUPPORTED_INTERFACES: Record<string, boolean | 'partial'> = {
   // Partially supported (with known issues)
   tags: 'partial', // Issue #10 - needs proper support
 
-  // Date/Time interfaces - NOT supported (Issue #5)
-  datetime: false,
-  date: false,
-  time: false,
-  timestamp: false,
+  // Date/Time interfaces - NOW SUPPORTED (Issue #5 fixed)
+  datetime: true,
+  date: true,
+  time: true,
+  timestamp: true,
 
   // Color interfaces - we have ColorCell component
   'select-color': true, // Fully supported with ColorCell component

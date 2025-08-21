@@ -36,18 +36,18 @@ This extension includes field type validation to prevent data corruption. Only t
 - ✅ `select-color` - Color picker (with ColorCell)
 - ✅ `color` - Color display
 
+### Date/Time Fields (Issue #5 Fixed)
+- ✅ `date` - Date picker with calendar
+- ✅ `datetime` - Date and time picker
+- ✅ `time` - Time picker
+- ✅ `timestamp` - Timestamp with seconds
+
 ## Unsupported Fields
 
 ### File Fields (Non-Image)
 - ❌ `file` - General files (PDFs, Word, Excel, etc.)
 - ❌ `files` - Multiple file selection
 - Note: Only IMAGE files are supported, not documents
-
-### Date/Time Fields (Issue #5)
-- ❌ `date` - Date picker broken
-- ❌ `datetime` - DateTime picker broken
-- ❌ `time` - Time picker broken
-- ❌ `timestamp` - Timestamp fields
 
 ### Tags & Complex Fields
 - ❌ `tags` - Tag input (Issue #10)
@@ -140,7 +140,10 @@ This feature prioritizes data integrity over convenience. Fields are disabled by
 
 ## Known Limitations
 
-1. **Date/Time Fields** (Issue #5): Currently broken, need fix
-2. **Tags Fields** (Issue #10): Complex implementation needed
-3. **Multiple Files**: Not yet implemented
-4. **Document Files**: Only images supported, not PDFs/docs
+1. **Tags Fields** (Issue #10): Complex implementation needed
+2. **Multiple Files**: Not yet implemented
+3. **Document Files**: Only images supported, not PDFs/docs
+
+## Recent Fixes
+
+1. **Date/Time Fields** (Issue #5): ✅ Fixed - All date/time pickers now work correctly
