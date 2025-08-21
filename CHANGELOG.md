@@ -5,7 +5,31 @@ All notable changes to the Super Layout Table Extension will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.2.2] - 2025-01-21
+## [0.2.3] - 2025-08-21
+
+### Added
+- Full date/time field support for inline editing (Issue #5)
+- Date picker with calendar for date/datetime/time/timestamp fields
+- Unified header actions UI - Save/Cancel buttons in popover header for ALL field types
+- Native Directus v-drawer pattern implementation for file browser
+- Icon-only rounded buttons matching native Directus style
+- Wider popover for date fields to accommodate calendar
+- date-fns dependency for proper date formatting
+
+### Changed
+- Moved all popover action buttons from footer to header for consistency
+- File browser now uses native v-drawer #actions slot pattern
+- Improved button styling to match Directus native UI
+- Auto-save indicator only shows when actually enabled
+
+### Fixed
+- Date picker not updating input field on selection (Issue #5)
+- Date values showing as "false" after save
+- v-model conflicts in date picker by using :value + @input pattern
+- File browser buttons not appearing in drawer header
+- Auto-save indicator showing incorrectly
+
+## [0.2.2] - 2025-08-20
 
 ### Added
 - Field support registry for inline editing validation (Issue #11)

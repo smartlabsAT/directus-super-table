@@ -58,12 +58,18 @@
       </template>
 
       <!-- Popover Content -->
-      <div class="edit-popover">
+      <div class="edit-popover" :class="{ 'date-popover': isDateField }">
         <!-- Header with Field Name -->
         <div class="popover-header">
           <span class="field-name">{{ fieldLabel }}</span>
           <div class="header-actions">
-            <v-icon v-tooltip="'Cancel (Esc)'" name="close" clickable x-small @click="cancelEdit" />
+            <!-- Save/Cancel buttons for all field types -->
+            <v-button icon rounded small secondary @click="cancelEdit">
+              <v-icon name="close" />
+            </v-button>
+            <v-button icon rounded small :disabled="!hasChanges" @click="saveAndClose">
+              <v-icon name="check" />
+            </v-button>
           </div>
         </div>
 
@@ -95,12 +101,21 @@
             @input="handleSelectChange"
           />
 
-          <!-- Date/Time Picker -->
+          <!-- Date/Time Pickers -->
           <interface-datetime
-            v-else-if="interfaceType === 'datetime'"
-            v-model="localValue"
-            v-bind="interfaceOptions"
-            @update:model-value="debouncedSave"
+            v-else-if="
+              interfaceType === 'datetime' ||
+              interfaceType === 'date' ||
+              interfaceType === 'time' ||
+              interfaceType === 'timestamp'
+            "
+            :value="localValue"
+            :type="fieldType"
+            :disabled="false"
+            :include-seconds="interfaceType === 'timestamp'"
+            :include-time="interfaceType === 'datetime' || interfaceType === 'timestamp'"
+            :include-date="interfaceType !== 'time'"
+            @input="handleDateTimeChange"
           />
 
           <!-- Color Picker -->
@@ -209,14 +224,8 @@
           />
         </div>
 
-        <!-- Footer Actions -->
-        <div class="popover-footer" v-if="!autoSave">
-          <v-button x-small secondary @click="cancelEdit"> Cancel </v-button>
-          <v-button x-small :disabled="!hasChanges" @click="saveAndClose"> Save </v-button>
-        </div>
-
-        <!-- Auto-save indicator -->
-        <div class="auto-save-status" v-else-if="hasChanges">
+        <!-- Auto-save indicator (only show if autoSave is actually enabled) -->
+        <div class="auto-save-status" v-if="autoSave && hasChanges">
           <v-icon name="fiber_manual_record" x-small class="pulse" />
           <span>Auto-saving...</span>
         </div>
@@ -228,129 +237,130 @@
       v-if="isFileField"
       v-model="showFileBrowser"
       :title="`Select ${isImageField ? 'Image' : 'File'}`"
+      persistent
       @cancel="closeFileBrowser"
     >
-      <template #header>
-        <v-drawer-header
-          :title="`Select ${isImageField ? 'Image' : 'File'}`"
-          @close="closeFileBrowser"
+      <!-- Action buttons in drawer header (native Directus pattern) -->
+      <template #actions>
+        <v-button
+          v-tooltip.bottom="'Clear selection'"
+          icon
+          rounded
+          secondary
+          @click="clearFileSelection"
         >
-          <template #icon>
-            <div class="drawer-icon-wrapper">
-              <img
-                v-if="localValue && isImageField"
-                :src="getImageUrl(localValue)"
-                class="drawer-icon-current-image"
-              />
-              <v-icon v-else name="add_photo_alternate" />
-            </div>
-          </template>
-        </v-drawer-header>
+          <v-icon name="delete_outline" />
+        </v-button>
+        <v-button
+          v-tooltip.bottom="'Select file'"
+          icon
+          rounded
+          :disabled="!selectedFileId"
+          @click="confirmFileSelection"
+        >
+          <v-icon name="check" />
+        </v-button>
       </template>
 
-      <div class="drawer-content">
-        <!-- Inline file browser implementation -->
-        <div class="file-browser-inline">
-          <!-- Custom Breadcrumb (v-breadcrumb is router-coupled) -->
-          <nav class="directus-breadcrumb" aria-label="Breadcrumb">
-            <ol class="breadcrumb-list">
-              <!-- Root/File Library -->
-              <li class="breadcrumb-item">
-                <button type="button" class="breadcrumb-link" @click="navigateToFolder(null)">
-                  <v-icon name="folder_special" x-small />
-                  File Library
-                </button>
-              </li>
+      <!-- Optional subtitle with selection info -->
+      <template #subtitle v-if="selectedFileId">
+        <span>1 file selected</span>
+      </template>
 
-              <!-- Folder Path -->
-              <li
-                v-for="(folder, index) in folderPath"
-                :key="folder.id"
-                class="breadcrumb-item"
-                :class="{ active: index === folderPath.length - 1 }"
-              >
-                <button
-                  v-if="index < folderPath.length - 1"
-                  type="button"
-                  class="breadcrumb-link"
-                  @click="navigateToFolder(folder.id)"
+      <!-- Main drawer content -->
+      <template #default>
+        <div class="drawer-content">
+          <!-- Inline file browser implementation -->
+          <div class="file-browser-inline">
+            <!-- Custom Breadcrumb (v-breadcrumb is router-coupled) -->
+            <nav class="directus-breadcrumb" aria-label="Breadcrumb">
+              <ol class="breadcrumb-list">
+                <!-- Root/File Library -->
+                <li class="breadcrumb-item">
+                  <button type="button" class="breadcrumb-link" @click="navigateToFolder(null)">
+                    <v-icon name="folder_special" x-small />
+                    File Library
+                  </button>
+                </li>
+
+                <!-- Folder Path -->
+                <li
+                  v-for="(folder, index) in folderPath"
+                  :key="folder.id"
+                  class="breadcrumb-item"
+                  :class="{ active: index === folderPath.length - 1 }"
                 >
-                  {{ folder.name }}
-                </button>
-                <span v-else class="breadcrumb-current">
-                  {{ folder.name }}
-                </span>
-              </li>
-            </ol>
-          </nav>
+                  <button
+                    v-if="index < folderPath.length - 1"
+                    type="button"
+                    class="breadcrumb-link"
+                    @click="navigateToFolder(folder.id)"
+                  >
+                    {{ folder.name }}
+                  </button>
+                  <span v-else class="breadcrumb-current">
+                    {{ folder.name }}
+                  </span>
+                </li>
+              </ol>
+            </nav>
 
-          <!-- Search -->
-          <div class="browser-search">
-            <v-input
-              v-model="fileSearchQuery"
-              placeholder="Search files..."
-              prepend-icon="search"
-              @input="searchFiles"
-            />
-          </div>
-
-          <!-- Loading -->
-          <v-progress-linear v-if="filesLoading" indeterminate />
-
-          <!-- Files and Folders Grid -->
-          <div v-else class="files-grid">
-            <!-- No content message -->
-            <div
-              v-if="availableFiles.length === 0 && availableFolders.length === 0"
-              class="no-files"
-            >
-              No files or folders found
+            <!-- Search -->
+            <div class="browser-search">
+              <v-input
+                v-model="fileSearchQuery"
+                placeholder="Search files..."
+                prepend-icon="search"
+                @input="searchFiles"
+              />
             </div>
 
-            <!-- Folders first -->
-            <div
-              v-for="folder in availableFolders"
-              :key="`folder-${folder.id}`"
-              class="file-item folder-item"
-              @click="navigateToFolder(folder.id)"
-            >
-              <div class="folder-icon">
-                <v-icon name="folder" large color="var(--primary)" />
-              </div>
-              <div class="file-name">{{ folder.name }}</div>
-            </div>
+            <!-- Loading -->
+            <v-progress-linear v-if="filesLoading" indeterminate />
 
-            <!-- Then files -->
-            <div
-              v-for="file in availableFiles"
-              :key="file.id"
-              class="file-item"
-              :class="{ selected: file.id === selectedFileId }"
-              @click="selectFile(file)"
-            >
-              <div v-if="file.type?.startsWith('image')" class="file-preview">
-                <img :src="getImageUrl(file.id)" :alt="file.title || file.filename_download" />
+            <!-- Files and Folders Grid -->
+            <div v-else class="files-grid">
+              <!-- No content message -->
+              <div
+                v-if="availableFiles.length === 0 && availableFolders.length === 0"
+                class="no-files"
+              >
+                No files or folders found
               </div>
-              <div v-else class="file-icon">
-                <v-icon name="insert_drive_file" large />
-              </div>
-              <div class="file-name">{{ file.title || file.filename_download }}</div>
-            </div>
-          </div>
 
-          <!-- Actions -->
-          <div class="browser-actions">
-            <v-button secondary @click="clearFileSelection">
-              <v-icon name="close" />
-              Clear
-            </v-button>
-            <v-button :disabled="!selectedFileId" @click="confirmFileSelection">
-              <v-icon name="check" />
-              Select
-            </v-button>
+              <!-- Folders first -->
+              <div
+                v-for="folder in availableFolders"
+                :key="`folder-${folder.id}`"
+                class="file-item folder-item"
+                @click="navigateToFolder(folder.id)"
+              >
+                <div class="folder-icon">
+                  <v-icon name="folder" large color="var(--primary)" />
+                </div>
+                <div class="file-name">{{ folder.name }}</div>
+              </div>
+
+              <!-- Then files -->
+              <div
+                v-for="file in availableFiles"
+                :key="file.id"
+                class="file-item"
+                :class="{ selected: file.id === selectedFileId }"
+                @click="selectFile(file)"
+              >
+                <div v-if="file.type?.startsWith('image')" class="file-preview">
+                  <img :src="getImageUrl(file.id)" :alt="file.title || file.filename_download" />
+                </div>
+                <div v-else class="file-icon">
+                  <v-icon name="insert_drive_file" large />
+                </div>
+                <div class="file-name">{{ file.title || file.filename_download }}</div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      </template>
     </v-drawer>
 
     <!-- Non-editable or relational cell -->
@@ -443,6 +453,7 @@ const jsonError = ref<string | null>(null);
 const imageLoadError = ref(false);
 const showFileBrowser = ref(false);
 const hasEscapeHandler = ref(false); // Track if escape handler is added
+const popoverPlacement = ref<string>('bottom-start');
 
 // File browser state
 const filesLoading = ref(false);
@@ -510,6 +521,12 @@ const isImageField = computed(() => {
   return iface === 'file-image' || iface === 'image';
 });
 
+// Date field detection
+const isDateField = computed(() => {
+  const iface = props.interfaceType;
+  return iface === 'date' || iface === 'datetime' || iface === 'time' || iface === 'timestamp';
+});
+
 // Global popover management
 function closeOtherPopovers() {
   // Broadcast event to close other popovers
@@ -534,6 +551,27 @@ function handleCloseRequest(event: CustomEvent) {
 watch(menuActive, (active) => {
   if (active) {
     closeOtherPopovers(); // Close all other popovers first
+
+    // Calculate optimal placement for date pickers
+    if (
+      cellRef.value &&
+      (props.interfaceType === 'date' ||
+        props.interfaceType === 'datetime' ||
+        props.interfaceType === 'time' ||
+        props.interfaceType === 'timestamp')
+    ) {
+      const rect = cellRef.value.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const spaceBelow = viewportHeight - rect.bottom;
+      const spaceAbove = rect.top;
+
+      // If less than 450px below and more space above, place on top
+      if (spaceBelow < 450 && spaceAbove > 450) {
+        popoverPlacement.value = 'top-start';
+      } else {
+        popoverPlacement.value = 'bottom-start';
+      }
+    }
 
     // For file fields, open drawer immediately instead of popover
     if (isFileField.value) {
@@ -705,10 +743,12 @@ function openEditor() {
 }
 
 function saveAndClose() {
-  if (hasChanges.value) {
+  // Always save if we have a value change, not just based on hasChanges computed
+  if (localValue.value !== originalValue.value || hasUnsavedChanges.value) {
     emit('update:value', localValue.value);
     emit('save', localValue.value);
     hasUnsavedChanges.value = false;
+    originalValue.value = localValue.value;
   }
   menuActive.value = false;
 }
@@ -742,6 +782,19 @@ function handleColorChange(value: any) {
     debouncedSave(value);
   } else {
     hasUnsavedChanges.value = true;
+  }
+}
+
+function handleDateTimeChange(value: any) {
+  // Handle date/time value updates
+  // Directus datetime interface returns ISO string or null
+  localValue.value = value;
+
+  // Mark as changed so save button enables
+  hasUnsavedChanges.value = true;
+
+  if (props.autoSave) {
+    debouncedSave(value);
   }
 }
 
@@ -1135,6 +1188,13 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
+/* Wider popover for date fields to accommodate calendar */
+.edit-popover:has(.interface-datetime),
+.edit-popover.date-popover {
+  min-width: 380px;
+  max-width: 450px;
+}
+
 .popover-header {
   display: flex;
   align-items: center;
@@ -1152,8 +1212,13 @@ onUnmounted(() => {
 
 .header-actions {
   display: flex;
-  gap: 8px;
+  gap: 4px;
+  align-items: center;
+  flex-direction: row;
+  justify-content: flex-end;
 }
+
+/* Icon buttons in header are already properly styled by Directus */
 
 .popover-content {
   padding: 16px;
@@ -1168,16 +1233,6 @@ onUnmounted(() => {
 
 .popover-content :deep(.v-textarea) {
   min-height: 100px;
-}
-
-.popover-footer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  padding: 12px 16px;
-  background: var(--background-subdued);
-  border-top: var(--border-width) solid var(--border-subdued);
 }
 
 .auto-save-status {
@@ -1515,14 +1570,6 @@ onUnmounted(() => {
   white-space: nowrap;
   width: 100%;
   line-height: 1.2;
-}
-
-.browser-actions {
-  padding: 16px;
-  border-top: 1px solid var(--border-color);
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
 }
 
 /* Override v-menu arrow to match cell */

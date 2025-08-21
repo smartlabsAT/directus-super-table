@@ -153,10 +153,6 @@ export function getFieldEditWarning(field: Field | null, fieldKey?: string): str
         return 'Tag fields have limited support (Issue #10). Complex tag operations should be done in detail view.';
       case 'files':
         return 'Multiple file fields have limited support. Use the detail view for managing multiple files.';
-      case 'datetime':
-      case 'date':
-      case 'time':
-        return 'Date/Time fields are not working correctly (Issue #5). Please use the item detail view.';
       default:
         return `Interface "${interfaceType}" has limited support for inline editing.`;
     }
