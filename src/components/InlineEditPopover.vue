@@ -1478,7 +1478,10 @@ onUnmounted(() => {
 
 .files-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); /* Größere Mindestbreite für bessere Bilddarstellung */
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(160px, 1fr)
+  ); /* Größere Mindestbreite für bessere Bilddarstellung */
   gap: 12px; /* Mehr Abstand zwischen Items */
   padding: 16px;
   overflow-y: auto;

@@ -1,8 +1,8 @@
 <!-- ./extensions/layouts/super-layout-table/components/CellRenderers/ImageCell.vue -->
 <template>
   <div class="image-cell" :class="`align-${alignment || 'center'}`">
-    <div 
-      v-if="imageSrc" 
+    <div
+      v-if="imageSrc"
       class="image-wrapper"
       @mouseenter="handleMouseEnter"
       @mouseleave="showPreview = false"
@@ -10,11 +10,11 @@
       <img :src="imageSrc" :alt="alt || 'Preview'" class="preview-image" @error="onImageError" />
     </div>
     <span v-else class="image-empty">—</span>
-    
+
     <!-- Hover preview außerhalb des Wrappers mit v-show -->
     <Teleport to="body" v-if="imageSrc">
-      <div 
-        v-show="showPreview" 
+      <div
+        v-show="showPreview"
         class="image-hover-preview"
         :style="previewStyle"
         @mouseenter="showPreview = true"
@@ -77,26 +77,26 @@ const previewStyle = computed(() => {
   const previewHeight = 400;
   const windowWidth = window.innerWidth;
   const windowHeight = window.innerHeight;
-  
+
   let left = mouseX.value + offset;
-  let top = mouseY.value - (previewHeight / 2); // Vertikal zentriert zur Maus
-  
+  let top = mouseY.value - previewHeight / 2; // Vertikal zentriert zur Maus
+
   // Wenn Preview rechts aus dem Fenster ragt, links von der Maus anzeigen
   if (left + previewWidth > windowWidth - 20) {
     left = mouseX.value - previewWidth - offset;
   }
-  
+
   // Sicherstellen dass Preview nicht aus dem Fenster ragt
   if (left < 20) left = 20;
   if (top < 20) top = 20;
   if (top + previewHeight > windowHeight - 20) {
     top = windowHeight - previewHeight - 20;
   }
-  
+
   return {
     left: `${left}px`,
     top: `${top}px`,
-    transform: 'none' // Kein transform mehr nötig
+    transform: 'none', // Kein transform mehr nötig
   };
 });
 
@@ -200,7 +200,7 @@ function onImageError() {
     width: 80px;
     height: 60px;
   }
-  
+
   .image-hover-preview {
     width: 300px;
     height: 300px;
