@@ -43,7 +43,21 @@ jobs:
           tar -czf ../super-layout-table-${{ github.ref_name }}.tar.gz *
           cd ..
       
-      - name: Create GitHub Release
+      - name: Check if release exists
+        id: check_release
+        run: |
+          if gh release view ${{ github.ref_name }} &>/dev/null; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Release already exists, will upload assets only"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Release does not exist, will create it"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Create GitHub Release (if not exists)
+        if: steps.check_release.outputs.exists == 'false'
         uses: softprops/action-gh-release@v1
         with:
           files: super-layout-table-${{ github.ref_name }}.tar.gz
@@ -63,3 +77,13 @@ jobs:
             - ✅ Build: Successful
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Upload assets to existing release
+        if: steps.check_release.outputs.exists == 'true'
+        run: |
+          echo "Uploading assets to existing release ${{ github.ref_name }}"
+          gh release upload ${{ github.ref_name }} \
+            super-layout-table-${{ github.ref_name }}.tar.gz \
+            --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
