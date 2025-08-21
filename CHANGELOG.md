@@ -5,6 +5,24 @@ All notable changes to the Super Layout Table Extension will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.6] - 2025-08-21
+
+### Added
+- Smart hover preview for images that follows mouse position (Issue #6)
+- Column alignment support for ColorCell component
+- Proper aspect ratio preservation for all images
+
+### Changed
+- Image display now uses `object-fit: contain` to show complete images without cropping
+- File browser thumbnails increased from 60px to 140px for better visibility
+- Hover preview dynamically positions to avoid screen edges
+
+### Fixed
+- Images being cropped in table cells and file browser (Issue #6)
+- Column alignment not working for image and color cells
+- Cursor showing as `not-allowed` when hovering over cells in non-edit mode
+- Navigation to detail page blocked by incorrect cursor styles
+
 ## [0.2.5] - 2025-08-21
 
 ### Fixed

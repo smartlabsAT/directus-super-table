@@ -10,7 +10,7 @@ A powerful and feature-rich table layout extension for Directus 11+ that enhance
 
 ## Version
 
-v0.2.3 - Stable release
+v0.2.6 - Stable release
 
 ## 🌟 Top Features
 
@@ -29,8 +29,8 @@ Powerful search functionality across all table fields, including nested relation
 ### 👁️ View & Edit Mode
 Switch seamlessly between read-only view mode and interactive edit mode. Control when and how users can modify data.
 
-### 🖼️ Advanced Image Selector
-Built-in file browser with image preview for selecting and managing media files directly from table cells.
+### 🖼️ Advanced Image Display & Selection
+Smart image handling with hover preview, proper aspect ratios, and built-in file browser for selecting media files directly from table cells.
 
 ### 🔄 Deep Duplication
 Duplicate items with all their relationships and translations. Perfect for creating variations of complex data structures.
@@ -130,9 +130,9 @@ Edit data directly in the table without opening a separate form:
    - Text fields: Simple input or WYSIWYG editor
    - Boolean: Checkbox toggle
    - Select: Dropdown menu
-   - Date/Time: Full date picker with calendar (✨ NEW in v0.2.3)
-   - Color: Color picker
-   - Image/File: Advanced file browser with preview
+   - Date/Time: Full date picker with calendar
+   - Color: Color picker with alignment support
+   - Image/File: Enhanced file browser with larger previews (✨ IMPROVED in v0.2.6)
 3. **Unified Header Actions** (✨ NEW in v0.2.3):
    - Save/Cancel buttons now in popover header for all field types
    - Consistent UI across all editors

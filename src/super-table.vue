@@ -49,7 +49,7 @@
       ref="tableRef"
       v-model="selectionWritable"
       v-model:headers="tableHeadersWritable"
-      :class="['table', { 'has-image-fields': hasImageFields }]"
+      :class="['table', { 'has-image-fields': hasImageFields, 'edit-mode': editMode }]"
       :show-select="showSelect"
       show-resize
       must-sort
@@ -1270,6 +1270,15 @@ onUnmounted(() => {
 .table :deep(.edit-cell.is-editable),
 .table :deep(.edit-cell.is-editable:focus) {
   outline: none !important;
+}
+
+/* Clickable rows when not in edit mode - pointer cursor */
+.table:not(.edit-mode) :deep(tbody tr) {
+  cursor: pointer !important;
+}
+
+.table:not(.edit-mode) :deep(tbody tr td) {
+  cursor: pointer !important;
 }
 
 /* Text truncation for cell content - only data cells, not header/checkbox/drag */

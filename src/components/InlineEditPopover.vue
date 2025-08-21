@@ -1478,12 +1478,15 @@ onUnmounted(() => {
 
 .files-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 8px;
-  padding: 12px;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(160px, 1fr)
+  ); /* Größere Mindestbreite für bessere Bilddarstellung */
+  gap: 12px; /* Mehr Abstand zwischen Items */
+  padding: 16px;
   overflow-y: auto;
   max-height: 60vh; /* Maximal 60% der Viewport-Höhe */
-  min-height: 200px; /* Minimum Höhe */
+  min-height: 300px; /* Erhöhte Minimum Höhe */
 }
 
 .no-files {
@@ -1497,13 +1500,13 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 6px;
-  max-height: 100px; /* Maximale Höhe für Items */
+  padding: 8px;
+  min-height: 180px; /* Erhöhte Höhe für bessere Bilddarstellung */
   border: 2px solid transparent;
   border-radius: var(--border-radius);
   cursor: pointer;
   transition: all var(--fast) var(--transition);
-  overflow: hidden;
+  background: var(--background-page);
 }
 
 .file-item:hover {
@@ -1517,24 +1520,25 @@ onUnmounted(() => {
 
 .file-preview {
   width: 100%;
-  height: 60px;
+  height: 140px; /* Erhöhte Höhe für bessere Sichtbarkeit */
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
   border-radius: var(--border-radius);
   background: var(--background-subdued);
+  position: relative;
 }
 
 .file-preview img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain; /* Zeigt das komplette Bild ohne Abschneiden */
+  object-position: center;
 }
 
 .file-icon {
   width: 100%;
-  height: 60px;
+  height: 140px; /* Gleiche Höhe wie file-preview */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1544,7 +1548,7 @@ onUnmounted(() => {
 
 .folder-icon {
   width: 100%;
-  height: 60px;
+  height: 140px; /* Gleiche Höhe wie andere Icons */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1630,7 +1634,6 @@ onUnmounted(() => {
 .edit-cell.field-readonly,
 .edit-cell.field-partial {
   opacity: 0.7;
-  cursor: not-allowed !important;
 }
 
 .edit-cell.field-unsupported:hover,
@@ -1645,18 +1648,26 @@ onUnmounted(() => {
   opacity: 0.6;
 }
 
-/* Override cursor for non-editable cells */
-.edit-cell.non-editable,
-.edit-cell.field-unsupported,
-.edit-cell.field-readonly,
-.edit-cell.field-partial {
+/* Override cursor for non-editable cells - NUR im Edit-Mode */
+.edit-cell.non-editable.edit-mode-active,
+.edit-cell.field-unsupported.edit-mode-active,
+.edit-cell.field-readonly.edit-mode-active,
+.edit-cell.field-partial.edit-mode-active {
   cursor: not-allowed !important;
 }
 
-.edit-cell.non-editable .cell-display,
-.edit-cell.field-unsupported .cell-display,
-.edit-cell.field-readonly .cell-display,
-.edit-cell.field-partial .cell-display {
+.edit-cell.non-editable.edit-mode-active .cell-display,
+.edit-cell.field-unsupported.edit-mode-active .cell-display,
+.edit-cell.field-readonly.edit-mode-active .cell-display,
+.edit-cell.field-partial.edit-mode-active .cell-display {
   cursor: not-allowed !important;
+}
+
+/* Wenn NICHT im Edit-Mode, zeige Pointer für Navigation zur Detailseite */
+.edit-cell.non-editable:not(.edit-mode-active),
+.edit-cell.field-unsupported:not(.edit-mode-active),
+.edit-cell.field-readonly:not(.edit-mode-active),
+.edit-cell.field-partial:not(.edit-mode-active) {
+  cursor: pointer !important;
 }
 </style>

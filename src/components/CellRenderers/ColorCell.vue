@@ -1,6 +1,6 @@
 <!-- ./extensions/layouts/super-layout-table/components/CellRenderers/ColorCell.vue -->
 <template>
-  <div class="color-cell">
+  <div class="color-cell" :class="`align-${alignment || 'left'}`">
     <div
       v-if="colorValue"
       class="color-display"
@@ -33,6 +33,7 @@ const props = defineProps<{
   item?: any;
   field?: string;
   editMode?: boolean;
+  alignment?: 'left' | 'center' | 'right';
 }>();
 
 const { useNotificationsStore } = useStores();
@@ -96,6 +97,20 @@ async function copyToClipboard() {
   display: flex;
   align-items: center;
   min-height: 32px;
+  width: 100%;
+}
+
+/* Alignment variations */
+.color-cell.align-left {
+  justify-content: flex-start;
+}
+
+.color-cell.align-center {
+  justify-content: center;
+}
+
+.color-cell.align-right {
+  justify-content: flex-end;
 }
 
 .color-display {
