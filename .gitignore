@@ -8,3 +8,5 @@ claude.md
 /.claude/
 .DS_Store
 **/.DS_Store
+/release/
+*.tar.gz
