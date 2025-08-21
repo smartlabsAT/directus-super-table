@@ -1,6 +1,6 @@
 {
   "name": "directus-extension-super-table",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "type": "module",
   "directus:extension": {
     "type": "layout",
@@ -32,6 +32,7 @@
   },
   "dependencies": {
     "@directus/format-title": "^12.0.1",
+    "date-fns": "^4.1.0",
     "lodash": "^4.17.21"
   },
   "devDependencies": {
