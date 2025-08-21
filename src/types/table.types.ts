@@ -22,6 +22,7 @@ export interface LayoutOptions {
   selectedLanguage?: string;
   autoSave?: boolean;
   editMode?: boolean;
+  directBooleanToggle?: boolean;
   quickFilters?: QuickFilter[];
   activeQuickFilterId?: string;
 }

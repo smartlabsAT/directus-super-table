@@ -11,9 +11,9 @@
 
   <div class="field" v-if="editMode">
     <label class="type-label">Direct Boolean Toggle</label>
-    <v-checkbox 
-      v-model="directBooleanToggle" 
-      label="Enable direct boolean field editing (single-click toggle without popover)" 
+    <v-checkbox
+      v-model="directBooleanToggle"
+      label="Enable direct boolean field editing (single-click toggle without popover)"
     />
   </div>
 </template>

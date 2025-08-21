@@ -258,11 +258,11 @@ const fieldSupportLevel = computed(() => {
 // Check if we should use BooleanToggleCell
 const shouldUseBooleanToggle = computed(() => {
   return (
-    props.directBooleanToggle &&
-    props.editMode &&
-    (props.field?.type === 'boolean' || 
-     props.field?.interface === 'boolean' ||
-     props.field?.interface === 'toggle')
+    props.directBooleanToggle === true &&
+    props.editMode === true &&
+    (props.field?.type === 'boolean' ||
+      props.field?.interface === 'boolean' ||
+      props.field?.interface === 'toggle')
   );
 });
 

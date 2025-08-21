@@ -1,19 +1,14 @@
 <template>
-  <div 
-    class="boolean-toggle-cell" 
-    :class="{ 
+  <div
+    class="boolean-toggle-cell"
+    :class="{
       'is-saving': isSaving,
-      'has-error': hasError 
+      'has-error': hasError,
     }"
     @click.stop="toggleBoolean"
   >
-    <v-progress-circular 
-      v-if="isSaving" 
-      indeterminate 
-      :size="16" 
-      :width="2" 
-    />
-    <v-checkbox 
+    <v-progress-circular v-if="isSaving" indeterminate :size="16" :width="2" />
+    <v-checkbox
       v-else
       :model-value="modelValue"
       :disabled="disabled || readonly"
@@ -78,7 +73,7 @@ async function toggleBoolean() {
   } catch (error: any) {
     hasError.value = true;
     emit('update:error', error);
-    
+
     // Show error notification
     notificationsStore.add({
       title: 'Failed to update',
@@ -87,7 +82,7 @@ async function toggleBoolean() {
     });
   } finally {
     isSaving.value = false;
-    
+
     // Clear error state after 3 seconds
     if (hasError.value) {
       setTimeout(() => {
