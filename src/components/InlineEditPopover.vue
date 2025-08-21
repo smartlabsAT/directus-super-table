@@ -15,12 +15,16 @@
         <!-- Cell Display with Edit Indicator -->
         <div
           ref="cellRef"
+          v-tooltip.bottom="getFieldTooltip()"
           class="edit-cell"
           :class="{
             'is-editing': active,
             'is-editable': isEditable && !isRelational,
             'has-changes': hasUnsavedChanges,
             'non-editable': !isEditable,
+            'field-unsupported': fieldSupportLevel === 'none',
+            'field-readonly': fieldSupportLevel === 'readonly',
+            'field-partial': fieldSupportLevel === 'partial',
           }"
           :tabindex="isEditable ? 0 : -1"
           @click="handleCellClick(toggle)"
@@ -37,11 +41,17 @@
             </template>
           </div>
 
-          <!-- Edit Indicator Icon -->
+          <!-- Edit Indicator Icon - show lock or edit icon, but only in edit mode -->
           <v-icon
-            v-if="isEditable && !isRelational && !active && !saving"
-            name="edit"
+            v-if="!active && !saving && shouldShowIcon()"
+            :name="getFieldIcon()"
             class="edit-icon"
+            :class="{
+              'lock-icon':
+                fieldSupportLevel === 'none' ||
+                fieldSupportLevel === 'readonly' ||
+                fieldSupportLevel === 'partial',
+            }"
             x-small
           />
         </div>
@@ -397,6 +407,9 @@ interface Props {
   collection?: string;
   primaryKeyValue?: string | number;
   allTranslations?: any[];
+  fieldSupportLevel?: 'full' | 'partial' | 'none' | 'readonly';
+  editModeActive?: boolean;
+  fieldEditWarning?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -572,10 +585,58 @@ watch(menuActive, (active) => {
 });
 
 // Methods
+function getFieldTooltip() {
+  // Only show tooltip in edit mode for non-editable fields
+  if (!props.editModeActive) {
+    return undefined;
+  }
+
+  // Show warning for partially supported or unsupported fields
+  if (
+    props.fieldSupportLevel === 'partial' ||
+    props.fieldSupportLevel === 'none' ||
+    props.fieldSupportLevel === 'readonly'
+  ) {
+    return props.fieldEditWarning || 'This field has limited or no inline editing support';
+  }
+
+  return undefined;
+}
+
+function shouldShowIcon() {
+  // Only show icons when edit mode is active globally
+  if (!props.editModeActive) {
+    return false;
+  }
+
+  // In edit mode, show appropriate icons
+  return true;
+}
+
+function getFieldIcon() {
+  if (
+    props.fieldSupportLevel === 'partial' ||
+    props.fieldSupportLevel === 'none' ||
+    props.fieldSupportLevel === 'readonly'
+  ) {
+    return 'lock'; // Lock for all non-editable fields
+  }
+  if (props.isEditable && !props.isRelational) {
+    return 'edit'; // Edit pencil for fully supported
+  }
+  return 'lock'; // Default to lock
+}
+
 function handleCellClick(toggle: Function) {
   // Only toggle if the field is editable
   if (props.isEditable && !props.isRelational) {
     toggle();
+  } else if (props.fieldSupportLevel === 'none' || props.fieldSupportLevel === 'readonly') {
+    // Show warning notification for unsupported fields
+    // Note: We can't use Directus notifications here, but the tooltip will provide the info
+    console.warn(
+      `Field "${props.fieldKey}" is not editable: Support level is ${props.fieldSupportLevel}`
+    );
   }
 }
 
@@ -1515,5 +1576,40 @@ onUnmounted(() => {
 .json-error {
   margin-top: 8px;
   font-size: 12px;
+}
+
+/* Styles for unsupported/readonly fields */
+.edit-cell.field-unsupported,
+.edit-cell.field-readonly,
+.edit-cell.field-partial {
+  opacity: 0.7;
+  cursor: not-allowed !important;
+}
+
+.edit-cell.field-unsupported:hover,
+.edit-cell.field-readonly:hover,
+.edit-cell.field-partial:hover {
+  background-color: var(--background-subdued);
+}
+
+/* Lock icon styling */
+.edit-icon.lock-icon {
+  color: var(--foreground-subdued);
+  opacity: 0.6;
+}
+
+/* Override cursor for non-editable cells */
+.edit-cell.non-editable,
+.edit-cell.field-unsupported,
+.edit-cell.field-readonly,
+.edit-cell.field-partial {
+  cursor: not-allowed !important;
+}
+
+.edit-cell.non-editable .cell-display,
+.edit-cell.field-unsupported .cell-display,
+.edit-cell.field-readonly .cell-display,
+.edit-cell.field-partial .cell-display {
+  cursor: not-allowed !important;
 }
 </style>
