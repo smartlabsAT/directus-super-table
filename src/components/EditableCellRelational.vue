@@ -36,6 +36,7 @@
         :item="item"
         :field="actualFieldKey"
         :edit-mode="props.editMode"
+        :alignment="props.align"
       />
       <!-- Use custom ImageCell for image fields -->
       <ImageCell
