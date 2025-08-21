@@ -5,6 +5,31 @@ All notable changes to the Super Layout Table Extension will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.2] - 2025-01-21
+
+### Added
+- Field support registry for inline editing validation (Issue #11)
+- Binary edit/lock icon system for field editability indication
+- Comprehensive field support utility functions
+- Field support documentation (docs/FIELD_SUPPORT.md)
+- Special handling for image fields with UUID type
+- Tooltips explaining why fields cannot be edited
+
+### Changed
+- Refactored field editability checking to use centralized system
+- Icons only show when edit mode is active
+- Simplified field support to binary approach (editable or locked)
+
+### Fixed
+- Tags field showing as editable when it shouldn't be
+- Image fields incorrectly blocked due to UUID type
+- Inconsistent UI between different unsupported field types
+- Lock icons showing outside of edit mode
+
+### Security
+- Prevent data corruption by blocking unsupported field types from inline editing
+- Added validation for sensitive fields (passwords, tokens, secrets)
+
 ## [Unreleased] - v0.2.0
 
 ### Added
