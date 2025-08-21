@@ -1631,7 +1631,6 @@ onUnmounted(() => {
 .edit-cell.field-readonly,
 .edit-cell.field-partial {
   opacity: 0.7;
-  cursor: not-allowed !important;
 }
 
 .edit-cell.field-unsupported:hover,
@@ -1646,18 +1645,26 @@ onUnmounted(() => {
   opacity: 0.6;
 }
 
-/* Override cursor for non-editable cells */
-.edit-cell.non-editable,
-.edit-cell.field-unsupported,
-.edit-cell.field-readonly,
-.edit-cell.field-partial {
+/* Override cursor for non-editable cells - NUR im Edit-Mode */
+.edit-cell.non-editable.edit-mode-active,
+.edit-cell.field-unsupported.edit-mode-active,
+.edit-cell.field-readonly.edit-mode-active,
+.edit-cell.field-partial.edit-mode-active {
   cursor: not-allowed !important;
 }
 
-.edit-cell.non-editable .cell-display,
-.edit-cell.field-unsupported .cell-display,
-.edit-cell.field-readonly .cell-display,
-.edit-cell.field-partial .cell-display {
+.edit-cell.non-editable.edit-mode-active .cell-display,
+.edit-cell.field-unsupported.edit-mode-active .cell-display,
+.edit-cell.field-readonly.edit-mode-active .cell-display,
+.edit-cell.field-partial.edit-mode-active .cell-display {
   cursor: not-allowed !important;
+}
+
+/* Wenn NICHT im Edit-Mode, zeige Pointer für Navigation zur Detailseite */
+.edit-cell.non-editable:not(.edit-mode-active),
+.edit-cell.field-unsupported:not(.edit-mode-active),
+.edit-cell.field-readonly:not(.edit-mode-active),
+.edit-cell.field-partial:not(.edit-mode-active) {
+  cursor: pointer !important;
 }
 </style>
