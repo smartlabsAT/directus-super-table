@@ -165,8 +165,6 @@ export function getFieldEditWarning(field: Field | null, fieldKey?: string): str
   return 'This field cannot be edited inline for unknown reasons';
 }
 
-
-
 /**
  * Get field support level for UI display
  */
