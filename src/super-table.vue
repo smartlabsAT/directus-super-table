@@ -208,7 +208,7 @@
           :saving="savingCells[`${item[primaryKeyField?.value?.field || 'id']}_${header.value}`]"
           :edit-mode="editMode"
           :align="header.align"
-          :direct-boolean-toggle="layoutOptions?.directBooleanToggle"
+          :direct-boolean-toggle="(layoutOptions as any)?.directBooleanToggle"
           @update="updateFieldValue"
           @save="autoSaveEdits"
         />
