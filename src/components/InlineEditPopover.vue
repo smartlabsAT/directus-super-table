@@ -1478,12 +1478,12 @@ onUnmounted(() => {
 
 .files-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 8px;
-  padding: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); /* Größere Mindestbreite für bessere Bilddarstellung */
+  gap: 12px; /* Mehr Abstand zwischen Items */
+  padding: 16px;
   overflow-y: auto;
   max-height: 60vh; /* Maximal 60% der Viewport-Höhe */
-  min-height: 200px; /* Minimum Höhe */
+  min-height: 300px; /* Erhöhte Minimum Höhe */
 }
 
 .no-files {
@@ -1497,13 +1497,13 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 6px;
-  max-height: 100px; /* Maximale Höhe für Items */
+  padding: 8px;
+  min-height: 180px; /* Erhöhte Höhe für bessere Bilddarstellung */
   border: 2px solid transparent;
   border-radius: var(--border-radius);
   cursor: pointer;
   transition: all var(--fast) var(--transition);
-  overflow: hidden;
+  background: var(--background-page);
 }
 
 .file-item:hover {
@@ -1517,24 +1517,25 @@ onUnmounted(() => {
 
 .file-preview {
   width: 100%;
-  height: 60px;
+  height: 140px; /* Erhöhte Höhe für bessere Sichtbarkeit */
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
   border-radius: var(--border-radius);
   background: var(--background-subdued);
+  position: relative;
 }
 
 .file-preview img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain; /* Zeigt das komplette Bild ohne Abschneiden */
+  object-position: center;
 }
 
 .file-icon {
   width: 100%;
-  height: 60px;
+  height: 140px; /* Gleiche Höhe wie file-preview */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1544,7 +1545,7 @@ onUnmounted(() => {
 
 .folder-icon {
   width: 100%;
-  height: 60px;
+  height: 140px; /* Gleiche Höhe wie andere Icons */
   display: flex;
   align-items: center;
   justify-content: center;
