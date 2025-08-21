@@ -1,15 +1,14 @@
 <template>
-  <!-- Use InlineEditPopover for editable fields -->
+  <!-- Use InlineEditPopover for all non-relational fields (including tags) -->
   <InlineEditPopover
     v-if="!isRelational"
-    v-tooltip.bottom="isHashField ? 'Password fields cannot be edited in table view' : undefined"
     :value="displayValue"
     :field-key="actualFieldKey"
     :field-label="field?.name || actualFieldKey"
     :field-type="field?.type"
     :interface-type="getInterfaceType() || undefined"
     :interface-options="interfaceOptions"
-    :is-editable="props.editMode && !field?.meta?.readonly && !isHashField"
+    :is-editable="isFieldEditableComputed"
     :is-relational="false"
     :auto-save="false"
     :saving="saving"
@@ -17,6 +16,9 @@
     :primary-key-value="(item?.id || item?.[primaryKeyField]) ?? undefined"
     :all-translations="item?.translations"
     :style="{ textAlign: props.align || 'left' }"
+    :field-support-level="fieldSupportLevel"
+    :edit-mode-active="props.editMode"
+    :field-edit-warning="fieldEditWarning"
     @update:value="handleUpdate"
     @save="handleSave"
     @next-field="navigateToNextCell"
@@ -112,6 +114,7 @@ import StatusCell from './CellRenderers/StatusCell.vue';
 import ImageCell from './CellRenderers/ImageCell.vue';
 import RelationalCell from './CellRenderers/RelationalCell.vue';
 import ColorCell from './CellRenderers/ColorCell.vue';
+import { isFieldEditable, getFieldEditWarning, getFieldSupportLevel } from '../utils/fieldSupport';
 
 const props = defineProps<{
   item: Item;
@@ -206,15 +209,34 @@ const displayValue = computed(() => {
   return props.item[props.fieldKey];
 });
 
-// Check if field is a hash/password field that should not be editable
-const isHashField = computed(() => {
-  return (
-    props.field?.type === 'hash' ||
-    props.field?.meta?.interface === 'input-hash' ||
-    props.field?.meta?.interface === 'password' ||
-    actualFieldKey.value.includes('password') ||
-    actualFieldKey.value.includes('secret')
-  );
+// Check if field is editable using the field support utility
+const isFieldEditableComputed = computed(() => {
+  if (!props.editMode) return false;
+
+  // Special case: translation fields should be editable if the base type is supported
+  if (actualFieldKey.value.startsWith('translations.')) {
+    // For now, allow editing of translation fields if edit mode is on
+    // The actual field support check will be done in the InlineEditPopover
+    return true;
+  }
+
+  // Use the field support utility which already handles tags and other partial support fields
+  const editable = isFieldEditable(props.field, actualFieldKey.value);
+  return editable;
+});
+
+// Get field edit warning message
+const fieldEditWarning = computed(() => {
+  if (!props.editMode) return '';
+  if (isFieldEditableComputed.value) return '';
+
+  // Use the unified warning system for all fields
+  return getFieldEditWarning(props.field, actualFieldKey.value);
+});
+
+// Get field support level for UI display
+const fieldSupportLevel = computed(() => {
+  return getFieldSupportLevel(props.field, actualFieldKey.value);
 });
 
 // Check if field is relational
@@ -358,17 +380,28 @@ function navigateToPrevCell() {
 </script>
 
 <style scoped>
-.editable-cell.relational {
+.editable-cell.relational,
+.editable-cell.non-editable {
   position: relative;
   min-height: 42px;
   padding: 8px 12px;
   cursor: default;
-  /* Removed opacity: 0.8 - content should be fully visible */
   display: flex;
   align-items: center;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.editable-cell.non-editable {
+  opacity: 0.7;
+  cursor: not-allowed !important;
+}
+
+.lock-icon {
+  margin-right: 8px;
+  color: var(--foreground-subdued);
+  opacity: 0.6;
 }
 
 /* Ensure full height for inline edit wrapper */
