@@ -51,6 +51,7 @@
         :value="value"
         :item="item"
         :field="actualFieldKey"
+        :alignment="align"
       />
       <!-- Use custom RelationalCell for relational fields -->
       <RelationalCell

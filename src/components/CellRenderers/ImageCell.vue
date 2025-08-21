@@ -1,6 +1,6 @@
 <!-- ./extensions/layouts/super-layout-table/components/CellRenderers/ImageCell.vue -->
 <template>
-  <div class="image-cell">
+  <div class="image-cell" :class="`align-${alignment || 'center'}`">
     <div 
       v-if="imageSrc" 
       class="image-wrapper"
@@ -39,6 +39,7 @@ const props = defineProps<{
   value?: string | ImageValue | null;
   item?: any;
   field?: string;
+  alignment?: 'left' | 'center' | 'right';
 }>();
 
 const imageError = ref(false);
@@ -114,10 +115,22 @@ function onImageError() {
 .image-cell {
   display: flex;
   align-items: center;
-  justify-content: center;
   width: 100%;
   padding: 2px;
   height: 100%;
+}
+
+/* Alignment variations */
+.image-cell.align-left {
+  justify-content: flex-start;
+}
+
+.image-cell.align-center {
+  justify-content: center;
+}
+
+.image-cell.align-right {
+  justify-content: flex-end;
 }
 
 .image-wrapper {
