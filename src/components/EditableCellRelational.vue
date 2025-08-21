@@ -1,5 +1,5 @@
 <template>
-  <!-- Use InlineEditPopover for all non-relational fields (including tags) -->
+  <!-- Use InlineEditPopover for all non-relational fields (including date fields) -->
   <InlineEditPopover
     v-if="!isRelational"
     :value="displayValue"
