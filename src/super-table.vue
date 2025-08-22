@@ -58,13 +58,13 @@
       :loading="loading"
       :item-key="primaryKeyField?.value?.field || 'id'"
       :show-manual-sort="sortAllowed"
-      :manual-sort-key="sortField?.value || null"
+      :manual-sort-key="sortFieldName"
       allow-header-reorder
       selection-use-keys
       :row-height="tableRowHeight"
       :clickable="!editMode"
       @update:sort="onSortChange"
-      @manual-sort="() => {}"
+      @manual-sort="handleManualSort"
       @toggle-select-all="onToggleSelectAll"
       @click:row="handleTableRowClick"
     >
@@ -272,7 +272,7 @@ import { ref, computed, toRefs, watch, unref, onMounted, onUnmounted, type Ref }
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { debounce } from 'lodash';
-import { useStores, useCollection, useSync } from '@directus/extensions-sdk';
+import { useStores, useCollection, useSync, useApi } from '@directus/extensions-sdk';
 import { formatTitle } from '@directus/format-title';
 import { getDefaultDisplayForType } from './utils/getDefaultDisplayForType';
 import { adjustFieldsForDisplays } from './utils/adjustFieldsForDisplays';
@@ -319,6 +319,7 @@ const emit = defineEmits<{
 // Composables
 const { t } = useI18n();
 const router = useRouter();
+const api = useApi();
 const { useFieldsStore, useRelationsStore, useNotificationsStore } = useStores();
 const fieldsStore = useFieldsStore();
 const relationsStore = useRelationsStore();
@@ -330,7 +331,7 @@ const layoutOptions = useSync(props, 'layoutOptions', emit);
 const layoutQuery = useSync(props, 'layoutQuery', emit);
 
 // Collection info
-const { collection, filter, search } = toRefs(props);
+const { collection, filter, search, readonly } = toRefs(props);
 const { primaryKeyField, fields: fieldsInCollection, sortField } = useCollection(collection.value);
 
 // Watch for changes in layoutOptions to sync customFieldNames
@@ -378,7 +379,17 @@ const showSelect = computed(() => {
   // Return 'multiple' for checkbox selection, false for no selection
   return layoutOptions.value?.showSelect !== false ? 'multiple' : false;
 });
-const sortAllowed = computed(() => !!sortField?.value);
+
+// Get the sort field name from the collection's sortField
+const sortFieldName = computed(() => {
+  // sortField from useCollection returns the field name directly
+  return sortField.value || null;
+});
+
+// Manual sort is allowed when there's a sort field and not readonly
+const sortAllowed = computed(() => {
+  return !!sortFieldName.value && !readonly.value && items.value?.length > 0 && !loading.value;
+});
 
 // Use pagination composable
 const { page, limit } = useTablePagination(layoutQuery as any);
@@ -555,9 +566,12 @@ const tableHeaders = computed(() => {
     // Determine if field is sortable
     // Translation fields are sortable (they're text fields in the related table)
     const isTranslationField = actualKey.startsWith('translations.');
+
+    // Default to sortable unless it's a known non-sortable type
+    const nonSortableTypes = ['json', 'alias', 'presentation', 'translations'];
     const isSortable = isTranslationField
       ? true
-      : !['json', 'alias', 'presentation', 'translations'].includes(field.type);
+      : !field.type || !nonSortableTypes.includes(field.type);
 
     return {
       text: headerText,
@@ -897,7 +911,8 @@ const combinedFilter = computed(() => {
 const tableApi = useTableApi();
 const loading = tableApi.loading;
 const error = tableApi.error;
-const items = tableApi.items;
+// Use our own items ref for local state management (like Directus does)
+const items = ref<Item[]>([]);
 const itemCount = tableApi.filterCount;
 
 // Calculate totalPages
@@ -909,7 +924,7 @@ const totalPages = computed(() => {
 // Fetch items function
 async function getItems() {
   try {
-    await tableApi.fetchItems({
+    const response = await tableApi.fetchItems({
       collection: collection.value,
       fields: fieldsWithRelational.value,
       filter: combinedFilter.value,
@@ -919,6 +934,9 @@ async function getItems() {
       deep: deep.value,
       alias: aliasQuery.value || undefined,
     });
+
+    // Update our local items ref (not the one from tableApi)
+    items.value = response.data || [];
   } catch {
     // Error is handled by tableApi internally
   }
@@ -943,7 +961,10 @@ watch(
 watch(
   [combinedFilter, sort, page, limit, fieldsWithRelational],
   () => {
-    getItems();
+    // Don't refetch during manual sorting
+    if (!isManualSorting) {
+      getItems();
+    }
   },
   { deep: true }
 );
@@ -1101,7 +1122,6 @@ function editItem(item: Item) {
   const primaryKey = item[pkField];
 
   if (!primaryKey) {
-    console.warn('No primary key found:', { item, pkField, primaryKeyField });
     notificationsStore.add({
       type: 'warning',
       title: 'Navigation Error',
@@ -1111,6 +1131,71 @@ function editItem(item: Item) {
   }
 
   router.push(`/content/${collection.value}/${primaryKey}`);
+}
+
+// Helper function to move item in array (exact Directus implementation)
+function moveInArray<T>(array: T[], fromIndex: number, toIndex: number): T[] {
+  if (fromIndex === toIndex) return array;
+
+  const item = array[fromIndex];
+  const newArray = [...array];
+
+  // Remove item from old position
+  newArray.splice(fromIndex, 1);
+
+  // Insert at new position
+  // When moving down, we need to adjust because we removed an item
+  const adjustedTo = fromIndex < toIndex ? toIndex - 1 : toIndex;
+  newArray.splice(adjustedTo, 0, item);
+
+  return newArray;
+}
+
+// Flag to prevent refetch after manual sort
+let isManualSorting = false;
+
+async function handleManualSort({ item, to }: { item: any; to: any }) {
+  const pk = primaryKeyField?.value?.field;
+  if (!pk) return;
+
+  // Find the indices of the items
+  const fromIndex = items.value.findIndex((existing: any) => existing[pk] === item);
+  const toIndex = items.value.findIndex((existing: any) => existing[pk] === to);
+
+  if (fromIndex === -1 || toIndex === -1) {
+    return;
+  }
+
+  // Set flag to prevent watch from refetching
+  isManualSorting = true;
+
+  // Move in local array immediately for instant feedback (exactly like Directus)
+  items.value = moveInArray(items.value, fromIndex, toIndex);
+
+  try {
+    // Use the Directus sort utility endpoint
+    const endpoint = `/utils/sort/${collection.value}`;
+    await api.post(endpoint, { item, to });
+
+    notificationsStore.add({
+      title: t('item_moved'),
+      type: 'success',
+    });
+  } catch (error: any) {
+    // Refresh items to restore correct order on error
+    await getItems();
+
+    notificationsStore.add({
+      title: t('error_moving_item'),
+      text: error.message || 'Failed to update sort order',
+      type: 'error',
+    });
+  } finally {
+    // Reset flag after a short delay
+    setTimeout(() => {
+      isManualSorting = false;
+    }, 100);
+  }
 }
 
 function handleTableRowClick({ item, event }: { item: Item; event: MouseEvent }) {
