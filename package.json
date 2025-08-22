@@ -1,7 +1,32 @@
 {
   "name": "directus-extension-super-table",
-  "version": "0.2.7",
+  "version": "0.2.8",
+  "description": "A powerful and feature-rich table layout extension for Directus 11+ with inline editing, quick filters, and manual sorting",
+  "keywords": [
+    "directus",
+    "directus-extension",
+    "directus-layout",
+    "table",
+    "inline-editing",
+    "super-table"
+  ],
+  "homepage": "https://github.com/smartlabsAT/directus-super-table#readme",
+  "bugs": {
+    "url": "https://github.com/smartlabsAT/directus-super-table/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/smartlabsAT/directus-super-table.git"
+  },
+  "license": "MIT",
+  "author": "smartlabs AT",
   "type": "module",
+  "files": [
+    "index.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "main": "index.js",
   "directus:extension": {
     "type": "layout",
     "path": "index.js",

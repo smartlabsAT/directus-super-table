@@ -5,6 +5,18 @@ All notable changes to the Super Layout Table Extension will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.8] - 2025-08-22
+
+### Added
+- Published to npm registry as `directus-extension-super-table`
+- LICENSE file (MIT)
+- Complete package.json metadata for npm publishing
+- Repository, homepage, and bug tracking URLs
+
+### Changed
+- Updated package.json with proper npm configuration
+- Main entry point now correctly points to dist/index.js
+
 ## [0.2.7] - 2025-08-22
 
 ### Added
