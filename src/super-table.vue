@@ -38,9 +38,9 @@
       </div>
 
       <!-- Selection count -->
-      <div v-if="(selection?.value?.length || 0) > 0" class="selection-count">
-        {{ selection?.value?.length || 0 }}
-        {{ (selection?.value?.length || 0) === 1 ? 'item' : 'items' }} selected
+      <div v-if="(selection?.length || 0) > 0" class="selection-count">
+        {{ selection?.length || 0 }}
+        {{ (selection?.length || 0) === 1 ? 'item' : 'items' }} selected
       </div>
     </div>
     <!-- Main Table -->
@@ -56,7 +56,7 @@
       :sort="tableSort"
       :items="items"
       :loading="loading"
-      :item-key="primaryKeyField?.value?.field || 'id'"
+      :item-key="getPrimaryKeyFieldName()"
       :show-manual-sort="sortAllowed"
       :manual-sort-key="sortFieldName"
       allow-header-reorder
@@ -203,9 +203,9 @@
           :item="item"
           :field-key="header.value"
           :field="header.field"
-          :edits="edits[item[primaryKeyField?.value?.field || 'id']]?.[header.value]"
+          :edits="edits[item[getPrimaryKeyFieldName()]]?.[header.value]"
           :get-display-value="getFromAliasedItem"
-          :saving="savingCells[`${item[primaryKeyField?.value?.field || 'id']}_${header.value}`]"
+          :saving="savingCells[`${item[getPrimaryKeyFieldName()]}_${header.value}`]"
           :edit-mode="editMode"
           :align="header.align"
           :direct-boolean-toggle="(layoutOptions as any)?.directBooleanToggle"
@@ -334,6 +334,17 @@ const layoutQuery = useSync(props, 'layoutQuery', emit);
 const { collection, filter, search, readonly } = toRefs(props);
 const { primaryKeyField, fields: fieldsInCollection, sortField } = useCollection(collection.value);
 
+// Helper to get primary key field name with proper typing
+const getPrimaryKeyFieldName = () => {
+  if (primaryKeyField?.value?.field) {
+    return primaryKeyField.value.field;
+  }
+  if ((primaryKeyField as any)?.field) {
+    return (primaryKeyField as any).field;
+  }
+  return 'id';
+};
+
 // Watch for changes in layoutOptions to sync customFieldNames
 watch(
   () => layoutOptions.value?.customFieldNames,
@@ -449,7 +460,7 @@ const fieldsWithRelational = computed(() => {
   const adjustedFields: string[] = adjustFieldsForDisplays(uniqueFields, props.collection);
 
   // CRITICAL: Always include the primary key field for navigation and identification
-  const pkField = primaryKeyField?.value?.field || 'id';
+  const pkField = getPrimaryKeyFieldName();
   if (!adjustedFields.includes(pkField)) {
     adjustedFields.unshift(pkField); // Add at the beginning
   }
@@ -988,7 +999,7 @@ function onToggleSelectAll() {
       selection.value = [];
     } else {
       // Select all - use keys since we have selection-use-keys
-      selection.value = items.value.map((item) => item[primaryKeyField?.value?.field || 'id']);
+      selection.value = items.value.map((item) => item[getPrimaryKeyFieldName()]);
     }
   }
 }
@@ -996,7 +1007,7 @@ function onToggleSelectAll() {
 // Edits tracking
 const { edits, savingCells, updateFieldValue, autoSaveEdits } = useTableEdits(
   collection,
-  ref(primaryKeyField.value || undefined),
+  computed(() => primaryKeyField?.value || (primaryKeyField as any) || undefined),
   items,
   getItems
 );
@@ -1118,7 +1129,7 @@ function toPage(newPage: number) {
 
 function editItem(item: Item) {
   // Get the primary key field name directly (no .value needed as per Directus pattern)
-  const pkField = primaryKeyField?.value?.field || 'id';
+  const pkField = getPrimaryKeyFieldName();
   const primaryKey = item[pkField];
 
   if (!primaryKey) {
@@ -1155,7 +1166,7 @@ function moveInArray<T>(array: T[], fromIndex: number, toIndex: number): T[] {
 let isManualSorting = false;
 
 async function handleManualSort({ item, to }: { item: any; to: any }) {
-  const pk = primaryKeyField?.value?.field;
+  const pk = getPrimaryKeyFieldName();
   if (!pk) return;
 
   // Find the indices of the items
@@ -1178,7 +1189,7 @@ async function handleManualSort({ item, to }: { item: any; to: any }) {
     await api.post(endpoint, { item, to });
 
     notificationsStore.add({
-      title: t('item_moved'),
+      title: 'Item moved',
       type: 'success',
     });
   } catch (error: any) {
