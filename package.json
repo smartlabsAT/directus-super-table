@@ -61,7 +61,7 @@
     "lodash": "^4.17.21"
   },
   "devDependencies": {
-    "@directus/extensions-sdk": "^15.0.0",
+    "@directus/extensions-sdk": "^11.0.10",
     "@directus/types": "^13.2.2",
     "@directus/utils": "^13.0.9",
     "@eslint/js": "^9.33.0",
