@@ -5,6 +5,22 @@ All notable changes to the Super Layout Table Extension will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Comprehensive debug logging for search functionality troubleshooting
+- Native Directus search field integration and synchronization
+- Enhanced Many-to-One relation search with proper nested syntax
+- Intelligent field type detection for relational fields
+
+### Fixed
+- **Search functionality improvements** (Issue #24):
+  - Native Directus search field (top-right) now works properly with extension
+  - Improved Many-to-One relation search using correct API syntax
+  - JSON fields properly excluded from search (Directus limitation)
+  - Search correctly resets pagination to page 1 when performing new searches
+  - Fixed pagination display when no search results are found
+
 ## [0.2.8] - 2025-08-22
 
 ### Added

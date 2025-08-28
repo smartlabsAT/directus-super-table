@@ -228,7 +228,7 @@
     </div>
 
     <!-- Pagination Footer -->
-    <div class="footer" v-if="itemCount && itemCount > 0">
+    <div class="footer" v-if="itemCount && itemCount > 0 && items.length > 0">
       <div class="pagination">
         <v-pagination
           v-if="totalPages > 1"
@@ -649,9 +649,22 @@ const editMode = computed({
   },
 });
 
-// Search
+// Search - sync with native Directus search field
 const searchQuery = ref(search?.value || '');
+
+// Watch for changes in native search field and sync to local search
+watch(search, (newSearch) => {
+  if (newSearch !== searchQuery.value) {
+    console.log('🔍 NATIVE SEARCH SYNC: Native search changed to:', newSearch);
+    searchQuery.value = newSearch || '';
+  }
+}, { immediate: true });
+
 const onSearchInput = debounce((val: string) => {
+  // Reset pagination to first page when searching
+  if (val !== (search?.value || '')) {
+    page.value = 1;
+  }
   emit('update:search', val);
 }, 300);
 
@@ -662,6 +675,11 @@ function buildSearchFilter(query: string) {
   const searchValue = query.trim();
   const conditions: any[] = [];
   const processedFields = new Set<string>(); // Track processed fields to avoid duplicates
+
+  // DEBUG: Start search debugging
+  console.log('🔍 SEARCH DEBUG: Starting search for:', searchValue);
+  console.log('🔍 SEARCH DEBUG: Collection:', collection.value);
+  console.log('🔍 SEARCH DEBUG: Visible fields:', fields.value);
 
   // Helper function to check if a string is a valid UUID
   const isValidUUID = (str: string) => {
@@ -683,6 +701,9 @@ function buildSearchFilter(query: string) {
   fields.value.forEach((fieldKey: string) => {
     // Remove language suffix if present (e.g., "translations.description:de-DE" -> "translations.description")
     const actualFieldKey = fieldKey.includes(':') ? fieldKey.split(':')[0] : fieldKey;
+
+    // DEBUG: Log each field processing
+    console.log('🔍 FIELD DEBUG: Processing field:', fieldKey, '-> actual:', actualFieldKey);
 
     // Skip if we've already processed this field (prevents duplicates from multi-language fields)
     if (processedFields.has(actualFieldKey)) {
@@ -709,19 +730,71 @@ function buildSearchFilter(query: string) {
           },
         });
       } else {
-        // Other relational fields
-        conditions.push({
-          [actualFieldKey]: {
-            _icontains: searchValue,
-          },
-        });
+        // Other relational fields (Many-to-One, etc.)
+        // Use nested object syntax: { rootField: { nestedField: { _operator: value } } }
+        console.log('🔍 M2O FIELD: Adding nested search condition for', rootField, '->', nestedField);
+        
+        // Try to get the related collection to determine field type
+        const rootFieldInfo = fieldsStore.getField(collection.value, rootField);
+        const relationsForField = relationsStore.getRelationsForField(collection.value, rootField);
+        let relatedCollection = null;
+        
+        if (relationsForField && relationsForField.length > 0) {
+          const relation = relationsForField[0];
+          relatedCollection = relation.related_collection || relation.collection;
+        }
+        
+        // Get field type from related collection
+        let nestedFieldInfo = null;
+        if (relatedCollection) {
+          nestedFieldInfo = fieldsStore.getField(relatedCollection, nestedField);
+        }
+        
+        console.log('🔍 M2O NESTED FIELD INFO:', nestedField, 'in', relatedCollection, '-> type:', nestedFieldInfo?.type);
+        
+        // Use appropriate operator based on field type
+        if (nestedFieldInfo && nestedFieldInfo.type === 'uuid' && searchIsUUID) {
+          // UUID fields: exact match
+          conditions.push({
+            [rootField]: {
+              [nestedField]: {
+                _eq: searchValue,
+              },
+            },
+          });
+        } else if (nestedFieldInfo && nestedFieldInfo.type === 'integer' && searchIsInteger) {
+          // Integer fields: exact match
+          conditions.push({
+            [rootField]: {
+              [nestedField]: {
+                _eq: searchAsInteger,
+              },
+            },
+          });
+        } else {
+          // String/text fields or fallback: partial match
+          conditions.push({
+            [rootField]: {
+              [nestedField]: {
+                _icontains: searchValue,
+              },
+            },
+          });
+        }
       }
     } else {
       // Direct fields - check if it's a searchable type
       const field = fieldsStore.getField(collection.value, actualFieldKey);
-      const searchableTypes = ['string', 'text'];
+      const searchableTypes = ['string', 'text']; // JSON removed - not supported by Directus
 
-      if (field && searchableTypes.includes(field.type)) {
+      // DEBUG: Log field info
+      console.log('🔍 FIELD INFO:', actualFieldKey, '-> type:', field?.type, 'hidden:', field?.meta?.hidden);
+
+      if (field && field.type === 'json') {
+        // JSON fields: NOT SUPPORTED by Directus - skip them
+        console.warn('⚠️ JSON FIELD SKIPPED:', actualFieldKey, '- Directus does not support JSON field filtering');
+      } else if (field && searchableTypes.includes(field.type)) {
+        console.log('🔍 STRING FIELD: Adding string search condition for', actualFieldKey);
         conditions.push({
           [actualFieldKey]: {
             _icontains: searchValue,
@@ -747,12 +820,20 @@ function buildSearchFilter(query: string) {
     }
   });
 
-  // If no searchable fields, fallback to all string/text/uuid/integer fields
-  if (conditions.length === 0) {
-    fieldsInCollection.value.forEach((field: Field) => {
-      const searchableTypes = ['string', 'text'];
+  // DEBUG: Log final conditions before fallback
+  console.log('🔍 CONDITIONS DEBUG: Found', conditions.length, 'conditions before fallback:', conditions);
 
-      if (searchableTypes.includes(field.type) && !field.meta?.hidden) {
+  // If no searchable fields, fallback to all string/text/json/uuid/integer fields
+  if (conditions.length === 0) {
+    console.log('🔍 FALLBACK DEBUG: No conditions found, trying fallback with all collection fields');
+    fieldsInCollection.value.forEach((field: Field) => {
+      const searchableTypes = ['string', 'text']; // JSON removed - not supported by Directus
+      console.log('🔍 FALLBACK FIELD:', field.field, 'type:', field.type, 'hidden:', field.meta?.hidden);
+
+      if (field.type === 'json' && !field.meta?.hidden) {
+        // JSON fields: NOT SUPPORTED by Directus - skip them
+        console.warn('⚠️ FALLBACK JSON FIELD SKIPPED:', field.field, '- Directus does not support JSON field filtering');
+      } else if (searchableTypes.includes(field.type) && !field.meta?.hidden) {
         conditions.push({
           [field.field]: {
             _icontains: searchValue,
@@ -776,12 +857,24 @@ function buildSearchFilter(query: string) {
     });
   }
 
-  return conditions.length > 0 ? { _or: conditions } : null;
+  // DEBUG: Final search filter
+  const finalFilter = conditions.length > 0 ? { _or: conditions } : null;
+  console.log('🔍 FINAL FILTER:', JSON.stringify(finalFilter, null, 2));
+  
+  return finalFilter;
 }
 
-// Computed search filter
+// Computed search filter - combine native and internal search
 const searchFilter = computed(() => {
-  return buildSearchFilter(searchQuery.value);
+  // Use either internal searchQuery or native search prop
+  const effectiveSearch = searchQuery.value || search?.value || '';
+  
+  // DEBUG: Show which search is being used
+  if (effectiveSearch) {
+    console.log('🔍 EFFECTIVE SEARCH:', effectiveSearch, 'from searchQuery:', searchQuery.value, 'from native:', search?.value);
+  }
+  
+  return buildSearchFilter(effectiveSearch);
 });
 
 // Build deep parameter for relational fields
@@ -918,7 +1011,13 @@ const itemCount = tableApi.filterCount;
 // Calculate totalPages
 const totalPages = computed(() => {
   if (!itemCount.value || !limit.value) return 1;
-  return Math.ceil(itemCount.value / limit.value);
+  const pages = Math.ceil(itemCount.value / limit.value);
+  
+  // DEBUG: Log pagination calculation
+  console.log('📄 PAGINATION DEBUG: itemCount:', itemCount.value, 'limit:', limit.value, 'totalPages:', pages);
+  console.log('📄 PAGINATION DEBUG: items.length:', items.value.length);
+  
+  return pages;
 });
 
 // Fetch items function
