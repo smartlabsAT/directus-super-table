@@ -38,9 +38,9 @@
       </div>
 
       <!-- Selection count -->
-      <div v-if="(selection?.length || 0) > 0" class="selection-count">
-        {{ selection?.length || 0 }}
-        {{ (selection?.length || 0) === 1 ? 'item' : 'items' }} selected
+      <div v-if="(selection?.value?.length || 0) > 0" class="selection-count">
+        {{ selection?.value?.length || 0 }}
+        {{ (selection?.value?.length || 0) === 1 ? 'item' : 'items' }} selected
       </div>
     </div>
     <!-- Main Table -->
