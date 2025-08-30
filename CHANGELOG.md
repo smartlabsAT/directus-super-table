@@ -5,6 +5,18 @@ All notable changes to the Super Layout Table Extension will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.10] - 2025-08-30
+
+### Fixed
+- Fixed manual sort column disappearing during column resizing operations
+- Removed loading state dependency from sortAllowed computed property to prevent temporary hiding of manual sort handles
+- Manual sort column now remains consistently visible during all table interactions
+
+### Technical Details
+- Issue #27: Manual sort handlers would temporarily disappear when resizing columns
+- Root cause: `sortAllowed` computed property included `!loading.value` condition
+- Solution: Simplified `sortAllowed` to only check for sort field existence and readonly state
+
 ## [0.2.8] - 2025-08-22
 
 ### Added
