@@ -398,8 +398,9 @@ const sortFieldName = computed(() => {
 });
 
 // Manual sort is allowed when there's a sort field and not readonly
+// Note: We don't check loading state to prevent manual sort column from disappearing during operations
 const sortAllowed = computed(() => {
-  return !!sortFieldName.value && !readonly.value && items.value?.length > 0 && !loading.value;
+  return !!sortFieldName.value && !readonly.value;
 });
 
 // Use pagination composable
