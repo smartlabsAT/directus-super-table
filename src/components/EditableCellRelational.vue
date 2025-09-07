@@ -66,30 +66,33 @@
         :field="actualFieldKey"
         :alignment="align"
       />
-      <!-- Use custom RelationalCell for relational fields -->
-      <RelationalCell
-        v-else-if="isRelationalInterface && !getInterfaceType()?.includes('select')"
+      <!-- PRIORITY 1: Use render-display for fields with display templates (all field types) -->
+      <render-display
+        v-if="field?.display"
         :value="value"
-        :field="actualFieldKey"
-        :item="item"
+        :display="field?.display"
+        :options="field?.displayOptions"
+        :interface="field?.interface"
+        :interface-options="field?.interfaceOptions"
+        :type="field?.type"
+        :collection="field?.collection"
+        :field="field?.field"
       />
-      <!-- Use custom StatusCell for status field -->
-      <StatusCell
-        v-else-if="actualFieldKey === 'status' && getInterfaceType() === 'select-dropdown'"
-        :value="value"
-        :options="interfaceOptions"
-        :field="actualFieldKey"
-        :edit-mode="props.editMode"
-        :align="props.align"
-      />
-      <!-- Use custom SelectCell for other select-dropdown interfaces -->
+      <!-- PRIORITY 2: Use custom SelectCell for select-dropdown interfaces -->
       <SelectCell
         v-else-if="getInterfaceType() === 'select-dropdown'"
         :value="value"
         :options="interfaceOptions"
         :field="actualFieldKey"
       />
-      <!-- Use render-display for other types -->
+      <!-- PRIORITY 3: Use custom RelationalCell for relational fields WITHOUT display template -->
+      <RelationalCell
+        v-else-if="isRelationalInterface"
+        :value="value"
+        :field="actualFieldKey"
+        :item="item"
+      />
+      <!-- FALLBACK: Use render-display for all other types -->
       <render-display
         v-else
         :value="value"
@@ -125,7 +128,6 @@ import type { Field, Item } from '@directus/types';
 import InlineEditPopover from './InlineEditPopover.vue';
 import BooleanToggleCell from './CellRenderers/BooleanToggleCell.vue';
 import SelectCell from './CellRenderers/SelectCell.vue';
-import StatusCell from './CellRenderers/StatusCell.vue';
 import ImageCell from './CellRenderers/ImageCell.vue';
 import RelationalCell from './CellRenderers/RelationalCell.vue';
 import ColorCell from './CellRenderers/ColorCell.vue';
@@ -334,6 +336,8 @@ const interfaceOptions = computed(() => {
 function getInterfaceType() {
   return props.field?.interface || props.field?.meta?.interface;
 }
+
+// Removed status-specific functions - no longer needed since render-display handles all display templates
 
 function handleUpdate(value: any) {
   const primaryKey = Object.keys(props.item).find((key) => key === 'id' || key.endsWith('_id'));
