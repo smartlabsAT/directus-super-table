@@ -66,7 +66,7 @@
         :field="actualFieldKey"
         :alignment="align"
       />
-      <!-- PRIORITY 1: Use render-display for fields with display templates (all field types) -->
+      <!-- ABSOLUTE PRIORITY: User-configured display templates (ALL field types) -->
       <render-display
         v-if="field?.display"
         :value="value"
@@ -78,32 +78,27 @@
         :collection="field?.collection"
         :field="field?.field"
       />
-      <!-- PRIORITY 2: Use custom SelectCell for select-dropdown interfaces -->
+      <!-- FALLBACK 1: Custom SelectCell for select-dropdown fields WITHOUT display template -->
       <SelectCell
         v-else-if="getInterfaceType() === 'select-dropdown'"
         :value="value"
         :options="interfaceOptions"
         :field="actualFieldKey"
       />
-      <!-- PRIORITY 3: Use custom RelationalCell for relational fields WITHOUT display template -->
+      <!-- FALLBACK 2: Custom RelationalCell for relational fields WITHOUT display template -->
       <RelationalCell
         v-else-if="isRelationalInterface"
         :value="value"
         :field="actualFieldKey"
         :item="item"
       />
-      <!-- FALLBACK: Use render-display for all other types -->
-      <render-display
+      <!-- FINAL FALLBACK: Raw value display for fields without any special handling -->
+      <span
         v-else
-        :value="value"
-        :display="field?.display"
-        :options="field?.displayOptions"
-        :interface="field?.interface"
-        :interface-options="field?.interfaceOptions"
-        :type="field?.type"
-        :collection="field?.collection"
-        :field="field?.field"
-      />
+        class="raw-value"
+      >
+        {{ value != null ? String(value) : '—' }}
+      </span>
     </template>
   </InlineEditPopover>
 
