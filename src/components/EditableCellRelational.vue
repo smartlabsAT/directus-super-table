@@ -93,27 +93,29 @@
         :item="item"
       />
       <!-- FINAL FALLBACK: Raw value display for fields without any special handling -->
-      <span
-        v-else
-        class="raw-value"
-      >
+      <span v-else class="raw-value">
         {{ value != null ? String(value) : '—' }}
       </span>
     </template>
   </InlineEditPopover>
 
-  <!-- Display only for relational fields -->
+  <!-- ABSOLUTE PRIORITY: Display templates for relational fields -->
+  <div
+    v-else-if="field?.display"
+    class="editable-cell relational"
+    :style="{ textAlign: props.align || 'left' }"
+  >
+    <!-- Manual Template Rendering - Production Fix -->
+    <span class="template-display">{{
+      renderTemplate(displayValue, field?.displayOptions?.template)
+    }}</span>
+  </div>
+
+  <!-- FALLBACK: Display only for relational fields without display templates -->
   <div v-else class="editable-cell relational" :style="{ textAlign: props.align || 'left' }">
-    <render-display
-      :value="displayValue"
-      :display="field?.display"
-      :options="field?.displayOptions"
-      :interface="field?.interface"
-      :interface-options="field?.interfaceOptions"
-      :type="field?.type"
-      :collection="field?.collection"
-      :field="field?.field"
-    />
+    <span class="raw-value">
+      {{ displayValue != null ? String(displayValue) : '—' }}
+    </span>
   </div>
 </template>
 
@@ -206,6 +208,51 @@ const displayValue = computed(() => {
   // For other relational fields, use the aliased getter if provided
   if (props.getDisplayValue) {
     return props.getDisplayValue(props.item, props.fieldKey);
+  }
+
+  // SPECIAL HANDLING for relational fields with display templates
+  // When a relational field has a display template, render-display expects the full object
+  // We check for known relational display types since field.special might not be available here
+  if (
+    props.field?.display &&
+    (props.field.display === 'related-values' ||
+      props.field.display === 'image' ||
+      props.field.display === 'file' ||
+      props.field.display === 'user')
+  ) {
+    const fieldValue = props.item[actualFieldKey.value];
+
+    // PRIORITY 1: Try to build object from dot-notation fields (these are always reliable)
+    const relatedObject: any = {};
+    let foundDotFields = false;
+
+    // Look for dot-notation fields in the item data first
+    Object.keys(props.item).forEach((key) => {
+      if (key.startsWith(`${actualFieldKey.value}.`)) {
+        const subField = key.substring(actualFieldKey.value.length + 1);
+        relatedObject[subField] = props.item[key];
+        foundDotFields = true;
+      }
+    });
+
+    // If we have the main field ID, add it
+    if (fieldValue != null) {
+      relatedObject.id = fieldValue;
+      foundDotFields = true;
+    }
+
+    // If we found dot-notation fields, return the constructed object
+    if (foundDotFields && Object.keys(relatedObject).length > 0) {
+      return relatedObject;
+    }
+
+    // FALLBACK 2: If it's already a full object, return it as-is
+    if (typeof fieldValue === 'object' && fieldValue !== null) {
+      return fieldValue;
+    }
+
+    // FALLBACK 3: Return the simple value (ID)
+    return fieldValue;
   }
 
   // For normal fields with dot notation
@@ -332,7 +379,34 @@ function getInterfaceType() {
   return props.field?.interface || props.field?.meta?.interface;
 }
 
-// Removed status-specific functions - no longer needed since render-display handles all display templates
+// Manual Template Rendering - Production Fix for render-display issue
+function renderTemplate(value: any, template: string): string {
+  if (!template || template === null || template === undefined) {
+    // No template - return formatted value
+    return value != null ? String(value) : '—';
+  }
+
+  if (!value) {
+    return '—';
+  }
+
+  // Handle object values for related fields
+  if (typeof value === 'object' && value !== null) {
+    let result = template;
+
+    // Replace template variables with actual values
+    Object.keys(value).forEach((key) => {
+      const regex = new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'g');
+      const fieldValue = value[key];
+      result = result.replace(regex, fieldValue != null ? String(fieldValue) : '');
+    });
+
+    return result;
+  }
+
+  // Handle simple values - replace all template vars with the same value
+  return template.replace(/\{\{.*?\}\}/g, String(value));
+}
 
 function handleUpdate(value: any) {
   const primaryKey = Object.keys(props.item).find((key) => key === 'id' || key.endsWith('_id'));
