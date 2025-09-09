@@ -118,7 +118,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, onBeforeMount, markRaw, ref, watch } from 'vue';
+import { computed, onBeforeMount, markRaw, ref } from 'vue';
 import type { Field, Item } from '@directus/types';
 import InlineEditPopover from './InlineEditPopover.vue';
 import BooleanToggleCell from './CellRenderers/BooleanToggleCell.vue';
@@ -148,46 +148,20 @@ const emit = defineEmits<{
   'navigate-prev': [];
 }>();
 
-// PHASE 1: Initial data cache to prevent corruption during re-renders
-const stableDataCache = ref<Item | null>(null);
-
-// SMART CACHE UPDATE: Only cache better data, never worse data
-function updateStableCache() {
-  if (!props.item) return;
-
-  try {
-    const newItem = JSON.parse(JSON.stringify(props.item));
-
-    // If cache is empty, always update
-    if (!stableDataCache.value) {
-      stableDataCache.value = markRaw(newItem);
-      return;
-    }
-
-    // SMART UPDATE: Only update cache if new data has MORE object data
-    for (const key of Object.keys(newItem)) {
-      const newValue = newItem[key];
-      const cachedValue = stableDataCache.value[key];
-
-      // If new value is an object and cached is primitive, update cache
-      if (newValue && typeof newValue === 'object' && typeof cachedValue !== 'object') {
-        stableDataCache.value = markRaw(newItem);
-        return;
-      }
-    }
-
-    // Cache stays the same - we have better data already
-  } catch {
-    // Silent cache update error handling
-  }
-}
+// Simple cache for relational objects - only cache on mount to avoid corruption
+const relationalCache = ref<Record<string, any>>({});
 
 onBeforeMount(() => {
-  updateStableCache();
+  // Cache relational objects once on mount
+  if (props.item) {
+    Object.keys(props.item).forEach((key) => {
+      const value = props.item[key];
+      if (value && typeof value === 'object' && value !== null) {
+        relationalCache.value[key] = markRaw(value);
+      }
+    });
+  }
 });
-
-// Watch props.item for changes and update cache intelligently - but debounced to prevent excessive calls
-watch(() => props.item, updateStableCache, { deep: true, immediate: true, flush: 'post' });
 
 // Computed
 const primaryKeyField = computed(() => {
@@ -244,45 +218,26 @@ const displayValue = computed(() => {
     return null;
   }
 
-  // 🚨 CRITICAL FIX: Display template logic MUST come BEFORE getDisplayValue!
-  // SPECIAL HANDLING for relational fields with display templates
+  // Handle relational fields with display templates
+  const template =
+    props.field?.displayOptions?.template || props.field?.meta?.display_options?.template;
 
-  const isRelatedValues = props.field?.display === 'related-values';
-  const isImage = props.field?.display === 'image';
-  const isFile = props.field?.display === 'file';
-  const isUser = props.field?.display === 'user';
-
-  // Check if this is a relational field with display template that needs special handling
-  if (
-    props.field?.display &&
-    props.field.display !== null &&
-    (isRelatedValues || isImage || isFile || isUser)
-  ) {
-    // For relational displays, we need to get the full object and render the template
+  if (template && props.field?.display) {
     const relationalValue = props.item[props.fieldKey];
 
-    // Check if field has a custom template
-    const template =
-      props.field?.displayOptions?.template || props.field?.meta?.display_options?.template;
-
-    if (template && relationalValue) {
-      // Silent recovery: Check for data corruption and fix it automatically
-      if (typeof relationalValue !== 'object' || relationalValue === null) {
-        // Try to get stable object from our cache
-        const stableObject = buildStableRelationalObject(props.fieldKey);
-        if (stableObject && typeof stableObject === 'object') {
-          return renderTemplate(stableObject, template);
-        }
-
-        // Last resort: show fallback without noisy logs
-        return '—';
-      }
-
+    // If we have an object, use it
+    if (relationalValue && typeof relationalValue === 'object') {
       return renderTemplate(relationalValue, template);
     }
 
-    // Fallback: if no template but is relational display, return the object itself
-    return relationalValue;
+    // If corrupted (primitive value), try cache fallback
+    const cachedValue = relationalCache.value[props.fieldKey];
+    if (cachedValue) {
+      return renderTemplate(cachedValue, template);
+    }
+
+    // No data available
+    return '—';
   }
 
   // For other relational fields, use the aliased getter if provided
@@ -441,48 +396,6 @@ function renderTemplate(value: any, template: string): string {
 
   // Handle simple values - replace all template vars with the same value
   return template.replace(/\{\{.*?\}\}/g, String(value));
-}
-
-// FINAL FIX: Direct access to relational data without relying on dot-notation
-function buildStableRelationalObject(fieldKey: string): any {
-  try {
-    // STEP 1: Get the direct field value first
-    const directValue = props.item[fieldKey];
-
-    // STEP 2: If we have a valid object, use it directly (this is our data!)
-    if (directValue && typeof directValue === 'object' && directValue !== null) {
-      return directValue;
-    }
-
-    // STEP 3: Try cached data as fallback
-    if (stableDataCache.value && stableDataCache.value[fieldKey]) {
-      const cachedValue = stableDataCache.value[fieldKey];
-
-      if (cachedValue && typeof cachedValue === 'object' && cachedValue !== null) {
-        return cachedValue;
-      }
-    }
-
-    // STEP 4: Legacy dot-notation fallback (for compatibility)
-    const rawItem = JSON.parse(JSON.stringify(props.item));
-    const relatedObject: any = {};
-
-    Object.keys(rawItem).forEach((key) => {
-      if (key.startsWith(`${fieldKey}.`)) {
-        const subField = key.substring(fieldKey.length + 1);
-        relatedObject[subField] = rawItem[key];
-      }
-    });
-
-    if (Object.keys(relatedObject).length > 0) {
-      return relatedObject;
-    }
-
-    return null;
-  } catch {
-    // Silent error handling
-    return null;
-  }
 }
 
 function handleUpdate(value: any) {
