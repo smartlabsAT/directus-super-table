@@ -275,7 +275,6 @@ import { debounce } from 'lodash';
 import { useStores, useCollection, useSync, useApi } from '@directus/extensions-sdk';
 import { formatTitle } from '@directus/format-title';
 import { getDefaultDisplayForType } from './utils/getDefaultDisplayForType';
-import { adjustFieldsForDisplays } from './utils/adjustFieldsForDisplays';
 import { useTableApi } from './composables/api';
 import { useAliasFields } from './composables/useAliasFields';
 import { useLanguageSelector } from './composables/useLanguageSelector';
@@ -442,23 +441,22 @@ const fieldsForAliasing = computed(() => {
 });
 
 // Use alias fields for proper relational data handling
-const { aliasQuery, getFromAliasedItem } = useAliasFields(fieldsForAliasing, collection);
+const { aliasedFields, aliasQuery, getFromAliasedItem } = useAliasFields(
+  fieldsForAliasing,
+  collection
+);
 
-// Adjust fields for displays
+// Create fields for API query using the aliased fields (following original Directus pattern)
 const fieldsWithRelational = computed(() => {
   if (!props.collection) return [];
 
-  // Get unique fields without language suffixes for API query
-  // We fetch all translation data and filter client-side by language
-  const uniqueFields = [
-    ...new Set(
-      fields.value.map((field: string) => {
-        return field.includes(':') ? field.split(':')[0] : field;
-      })
-    ),
-  ];
+  // Extract all fields from aliasedFields (this includes display-adjusted fields)
+  const allDisplayFields = Object.values(aliasedFields.value).flatMap((aliasInfo) => {
+    return aliasInfo.fields || [aliasInfo.key];
+  });
 
-  const adjustedFields: string[] = adjustFieldsForDisplays(uniqueFields, props.collection);
+  // Remove duplicates
+  const adjustedFields = [...new Set(allDisplayFields)];
 
   // CRITICAL: Always include the primary key field for navigation and identification
   const pkField = getPrimaryKeyFieldName();
@@ -585,7 +583,7 @@ const tableHeaders = computed(() => {
       ? true
       : !field.type || !nonSortableTypes.includes(field.type);
 
-    return {
+    const headerResult = {
       text: headerText,
       value: field.key,
       description,
@@ -603,6 +601,8 @@ const tableHeaders = computed(() => {
       },
       sortable: isSortable,
     };
+
+    return headerResult;
   });
 });
 
@@ -804,6 +804,7 @@ const deep = computed(() => {
     // Remove language suffix if present
     const actualField = field.includes(':') ? field.split(':')[0] : field;
 
+    // Handle dot-notation relational fields (like "user_created.first_name")
     if (actualField.includes('.')) {
       const parts = actualField.split('.');
       const rootField = parts[0];
@@ -820,6 +821,23 @@ const deep = computed(() => {
         // For other relations
         if (!deepFields[rootField]) {
           deepFields[rootField] = {
+            _fields: ['*'],
+          };
+        }
+      }
+    } else {
+      // Handle pure relational fields (like "image_data", "status_id", etc.)
+      // Check if this field is relational by looking at field metadata
+      const fieldMeta = fieldsStore.getField(collection.value, actualField);
+
+      if (
+        fieldMeta?.meta?.special?.includes('m2o') ||
+        fieldMeta?.meta?.special?.includes('o2m') ||
+        fieldMeta?.meta?.special?.includes('m2m') ||
+        fieldMeta?.meta?.special?.includes('m2a')
+      ) {
+        if (!deepFields[actualField]) {
+          deepFields[actualField] = {
             _fields: ['*'],
           };
         }

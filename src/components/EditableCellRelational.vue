@@ -66,32 +66,9 @@
         :field="actualFieldKey"
         :alignment="align"
       />
-      <!-- Use custom RelationalCell for relational fields -->
-      <RelationalCell
-        v-else-if="isRelationalInterface && !getInterfaceType()?.includes('select')"
-        :value="value"
-        :field="actualFieldKey"
-        :item="item"
-      />
-      <!-- Use custom StatusCell for status field -->
-      <StatusCell
-        v-else-if="actualFieldKey === 'status' && getInterfaceType() === 'select-dropdown'"
-        :value="value"
-        :options="interfaceOptions"
-        :field="actualFieldKey"
-        :edit-mode="props.editMode"
-        :align="props.align"
-      />
-      <!-- Use custom SelectCell for other select-dropdown interfaces -->
-      <SelectCell
-        v-else-if="getInterfaceType() === 'select-dropdown'"
-        :value="value"
-        :options="interfaceOptions"
-        :field="actualFieldKey"
-      />
-      <!-- Use render-display for other types -->
+      <!-- ABSOLUTE PRIORITY: User-configured display templates (ALL field types) -->
       <render-display
-        v-else
+        v-if="field?.display"
         :value="value"
         :display="field?.display"
         :options="field?.displayOptions"
@@ -101,31 +78,51 @@
         :collection="field?.collection"
         :field="field?.field"
       />
+      <!-- FALLBACK 1: Custom SelectCell for select-dropdown fields WITHOUT display template -->
+      <SelectCell
+        v-else-if="getInterfaceType() === 'select-dropdown'"
+        :value="value"
+        :options="interfaceOptions"
+        :field="actualFieldKey"
+      />
+      <!-- FALLBACK 2: Custom RelationalCell for relational fields WITHOUT display template -->
+      <RelationalCell
+        v-else-if="isRelationalInterface"
+        :value="value"
+        :field="actualFieldKey"
+        :item="item"
+      />
+      <!-- FINAL FALLBACK: Raw value display for fields without any special handling -->
+      <span v-else class="raw-value">
+        {{ value != null ? String(value) : '—' }}
+      </span>
     </template>
   </InlineEditPopover>
 
-  <!-- Display only for relational fields -->
+  <!-- ABSOLUTE PRIORITY: Display templates for relational fields -->
+  <div
+    v-else-if="field?.display"
+    class="editable-cell relational"
+    :style="{ textAlign: props.align || 'left' }"
+  >
+    <!-- Direct Display Value (already rendered in computed) -->
+    <span class="template-display">{{ displayValue }}</span>
+  </div>
+
+  <!-- FALLBACK: Display only for relational fields without display templates -->
   <div v-else class="editable-cell relational" :style="{ textAlign: props.align || 'left' }">
-    <render-display
-      :value="displayValue"
-      :display="field?.display"
-      :options="field?.displayOptions"
-      :interface="field?.interface"
-      :interface-options="field?.interfaceOptions"
-      :type="field?.type"
-      :collection="field?.collection"
-      :field="field?.field"
-    />
+    <span class="raw-value">
+      {{ displayValue != null ? String(displayValue) : '—' }}
+    </span>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue';
+import { computed, onBeforeMount, markRaw, ref } from 'vue';
 import type { Field, Item } from '@directus/types';
 import InlineEditPopover from './InlineEditPopover.vue';
 import BooleanToggleCell from './CellRenderers/BooleanToggleCell.vue';
 import SelectCell from './CellRenderers/SelectCell.vue';
-import StatusCell from './CellRenderers/StatusCell.vue';
 import ImageCell from './CellRenderers/ImageCell.vue';
 import RelationalCell from './CellRenderers/RelationalCell.vue';
 import ColorCell from './CellRenderers/ColorCell.vue';
@@ -150,6 +147,21 @@ const emit = defineEmits<{
   'navigate-next': [];
   'navigate-prev': [];
 }>();
+
+// Simple cache for relational objects - only cache on mount to avoid corruption
+const relationalCache = ref<Record<string, any>>({});
+
+onBeforeMount(() => {
+  // Cache relational objects once on mount
+  if (props.item) {
+    Object.keys(props.item).forEach((key) => {
+      const value = props.item[key];
+      if (value && typeof value === 'object' && value !== null) {
+        relationalCache.value[key] = markRaw(value);
+      }
+    });
+  }
+});
 
 // Computed
 const primaryKeyField = computed(() => {
@@ -204,6 +216,28 @@ const displayValue = computed(() => {
 
     // No translations available at all
     return null;
+  }
+
+  // Handle relational fields with display templates
+  const template =
+    props.field?.displayOptions?.template || props.field?.meta?.display_options?.template;
+
+  if (template && props.field?.display) {
+    const relationalValue = props.item[props.fieldKey];
+
+    // If we have an object, use it
+    if (relationalValue && typeof relationalValue === 'object') {
+      return renderTemplate(relationalValue, template);
+    }
+
+    // If corrupted (primitive value), try cache fallback
+    const cachedValue = relationalCache.value[props.fieldKey];
+    if (cachedValue) {
+      return renderTemplate(cachedValue, template);
+    }
+
+    // No data available
+    return '—';
   }
 
   // For other relational fields, use the aliased getter if provided
@@ -333,6 +367,35 @@ const interfaceOptions = computed(() => {
 // Methods
 function getInterfaceType() {
   return props.field?.interface || props.field?.meta?.interface;
+}
+
+// Manual Template Rendering - Production Fix for render-display issue
+function renderTemplate(value: any, template: string): string {
+  if (!template || template === null || template === undefined) {
+    // No template - return formatted value
+    return value != null ? String(value) : '—';
+  }
+
+  if (!value) {
+    return '—';
+  }
+
+  // Handle object values for related fields
+  if (typeof value === 'object' && value !== null) {
+    let result = template;
+
+    // Replace template variables with actual values
+    Object.keys(value).forEach((key) => {
+      const regex = new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'g');
+      const fieldValue = value[key];
+      result = result.replace(regex, fieldValue != null ? String(fieldValue) : '');
+    });
+
+    return result;
+  }
+
+  // Handle simple values - replace all template vars with the same value
+  return template.replace(/\{\{.*?\}\}/g, String(value));
 }
 
 function handleUpdate(value: any) {
