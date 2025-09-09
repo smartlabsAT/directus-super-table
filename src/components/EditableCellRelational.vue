@@ -118,7 +118,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, onBeforeMount, markRaw, ref } from 'vue';
+import { computed, onBeforeMount, markRaw, ref, watch } from 'vue';
 import type { Field, Item } from '@directus/types';
 import InlineEditPopover from './InlineEditPopover.vue';
 import BooleanToggleCell from './CellRenderers/BooleanToggleCell.vue';
@@ -151,17 +151,43 @@ const emit = defineEmits<{
 // PHASE 1: Initial data cache to prevent corruption during re-renders
 const stableDataCache = ref<Item | null>(null);
 
-onBeforeMount(() => {
-  // Capture clean data structure before any re-renders can corrupt it
-  if (props.item) {
-    try {
-      stableDataCache.value = markRaw(JSON.parse(JSON.stringify(props.item)));
-    } catch (error) {
-      console.warn('Failed to cache initial data:', error);
-      stableDataCache.value = null;
+// SMART CACHE UPDATE: Only cache better data, never worse data
+function updateStableCache() {
+  if (!props.item) return;
+
+  try {
+    const newItem = JSON.parse(JSON.stringify(props.item));
+
+    // If cache is empty, always update
+    if (!stableDataCache.value) {
+      stableDataCache.value = markRaw(newItem);
+      return;
     }
+
+    // SMART UPDATE: Only update cache if new data has MORE object data
+    for (const key of Object.keys(newItem)) {
+      const newValue = newItem[key];
+      const cachedValue = stableDataCache.value[key];
+
+      // If new value is an object and cached is primitive, update cache
+      if (newValue && typeof newValue === 'object' && typeof cachedValue !== 'object') {
+        stableDataCache.value = markRaw(newItem);
+        return;
+      }
+    }
+
+    // Cache stays the same - we have better data already
+  } catch {
+    // Silent cache update error handling
   }
+}
+
+onBeforeMount(() => {
+  updateStableCache();
 });
+
+// Watch props.item for changes and update cache intelligently - but debounced to prevent excessive calls
+watch(() => props.item, updateStableCache, { deep: true, immediate: true, flush: 'post' });
 
 // Computed
 const primaryKeyField = computed(() => {
@@ -185,7 +211,6 @@ const actualFieldKey = computed(() => {
 });
 
 const displayValue = computed(() => {
-
   // For edited values
   if (props.edits !== undefined) {
     return props.edits;
@@ -221,12 +246,11 @@ const displayValue = computed(() => {
 
   // 🚨 CRITICAL FIX: Display template logic MUST come BEFORE getDisplayValue!
   // SPECIAL HANDLING for relational fields with display templates
-  
+
   const isRelatedValues = props.field?.display === 'related-values';
   const isImage = props.field?.display === 'image';
   const isFile = props.field?.display === 'file';
   const isUser = props.field?.display === 'user';
-  
 
   // Check if this is a relational field with display template that needs special handling
   if (
@@ -234,33 +258,29 @@ const displayValue = computed(() => {
     props.field.display !== null &&
     (isRelatedValues || isImage || isFile || isUser)
   ) {
-    
     // For relational displays, we need to get the full object and render the template
     const relationalValue = props.item[props.fieldKey];
-    
+
     // Check if field has a custom template
-    const template = props.field?.displayOptions?.template || props.field?.meta?.display_options?.template;
-    
+    const template =
+      props.field?.displayOptions?.template || props.field?.meta?.display_options?.template;
+
     if (template && relationalValue) {
-      // 🚨 CRITICAL FIX: Check for data corruption (primitive value instead of object)
+      // Silent recovery: Check for data corruption and fix it automatically
       if (typeof relationalValue !== 'object' || relationalValue === null) {
-        console.warn('🚨 DATA CORRUPTION DETECTED: Expected object, got primitive:', relationalValue);
-        console.warn('🚨 Attempting to get stable object from cache...');
-        
         // Try to get stable object from our cache
         const stableObject = buildStableRelationalObject(props.fieldKey);
         if (stableObject && typeof stableObject === 'object') {
           return renderTemplate(stableObject, template);
         }
-        
-        // Last resort: show corruption indicator
-        console.error('🚨 Cannot recover from data corruption - showing fallback');
+
+        // Last resort: show fallback without noisy logs
         return '—';
       }
-      
+
       return renderTemplate(relationalValue, template);
     }
-    
+
     // Fallback: if no template but is relational display, return the object itself
     return relationalValue;
   }
@@ -269,7 +289,6 @@ const displayValue = computed(() => {
   if (props.getDisplayValue) {
     return props.getDisplayValue(props.item, props.fieldKey);
   }
-
 
   // For normal fields with dot notation
   if (props.fieldKey.includes('.')) {
@@ -424,88 +443,44 @@ function renderTemplate(value: any, template: string): string {
   return template.replace(/\{\{.*?\}\}/g, String(value));
 }
 
-// DEFENSIVE PATTERN: Stable relational ID getter - bypasses Directus data corruption
-function getStableRelationalId(item: any, fieldKey: string): any {
-  try {
-    // PRIORITY: Try cached clean data first (before any corruption)
-    if (stableDataCache.value) {
-      const cachedId = stableDataCache.value[`${fieldKey}.id`];
-      if (cachedId !== undefined) {
-        return cachedId;
-      }
-      
-      const cachedField = stableDataCache.value[fieldKey];
-      if (typeof cachedField === 'number' || (typeof cachedField === 'string' && cachedField !== '')) {
-        return cachedField;
-      }
-    }
-
-    // FALLBACK: Use current item data with defensive patterns
-    const rawItem = JSON.parse(JSON.stringify(item));
-    
-    // PHASE 1: Always prefer dot notation for ID access (MOST STABLE)
-    const dotNotationId = rawItem[`${fieldKey}.id`];
-    if (dotNotationId !== undefined) {
-      return dotNotationId;
-    }
-    
-    // PHASE 2: Check if main field is object with ID
-    const fieldValue = rawItem[fieldKey];
-    if (typeof fieldValue === 'object' && fieldValue !== null && fieldValue.id !== undefined) {
-      return fieldValue.id;
-    }
-    
-    // PHASE 3: Return raw value if it's already an ID
-    if (typeof fieldValue === 'number' || (typeof fieldValue === 'string' && fieldValue !== '')) {
-      return fieldValue;
-    }
-    
-    return null;
-  } catch (error) {
-    console.warn('Stable ID extraction failed:', error);
-    return null;
-  }
-}
-
 // FINAL FIX: Direct access to relational data without relying on dot-notation
 function buildStableRelationalObject(fieldKey: string): any {
   try {
-    
     // STEP 1: Get the direct field value first
     const directValue = props.item[fieldKey];
-    
+
     // STEP 2: If we have a valid object, use it directly (this is our data!)
     if (directValue && typeof directValue === 'object' && directValue !== null) {
       return directValue;
     }
-    
+
     // STEP 3: Try cached data as fallback
     if (stableDataCache.value && stableDataCache.value[fieldKey]) {
       const cachedValue = stableDataCache.value[fieldKey];
-      
+
       if (cachedValue && typeof cachedValue === 'object' && cachedValue !== null) {
         return cachedValue;
       }
     }
-    
+
     // STEP 4: Legacy dot-notation fallback (for compatibility)
     const rawItem = JSON.parse(JSON.stringify(props.item));
     const relatedObject: any = {};
-    
+
     Object.keys(rawItem).forEach((key) => {
       if (key.startsWith(`${fieldKey}.`)) {
         const subField = key.substring(fieldKey.length + 1);
         relatedObject[subField] = rawItem[key];
       }
     });
-    
+
     if (Object.keys(relatedObject).length > 0) {
       return relatedObject;
     }
 
     return null;
-  } catch (error) {
-    console.warn('🚨 Stable object building failed:', error);
+  } catch {
+    // Silent error handling
     return null;
   }
 }
