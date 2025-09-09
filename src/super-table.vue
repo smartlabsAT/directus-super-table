@@ -49,7 +49,11 @@
       ref="tableRef"
       v-model="selectionWritable"
       v-model:headers="tableHeadersWritable"
-      :class="['table', { 'has-image-fields': hasImageFields, 'edit-mode': editMode }]"
+      :class="[
+        'table', 
+        `row-height-${currentRowHeight}`,
+        { 'has-image-fields': hasImageFields, 'edit-mode': editMode }
+      ]"
       :show-select="showSelect"
       show-resize
       must-sort
@@ -61,7 +65,6 @@
       :manual-sort-key="sortFieldName"
       allow-header-reorder
       selection-use-keys
-      :row-height="tableRowHeight"
       :clickable="!editMode"
       @update:sort="onSortChange"
       @manual-sort="handleManualSort"
@@ -644,10 +647,9 @@ const hasImageFields = computed(() => {
   );
 });
 
-// Row height - dynamic for image fields, fixed for others
-const tableRowHeight = computed(() => {
-  // If we have image fields, let rows adjust to content
-  return hasImageFields.value ? null : 48;
+// Row height - CSS class based on user preference
+const currentRowHeight = computed(() => {
+  return layoutOptions.value?.rowHeight || 'comfortable';
 });
 
 // Edit Mode - use from layoutOptions for persistence
@@ -1341,11 +1343,36 @@ onUnmounted(() => {
   margin-right: var(--content-padding);
 }
 
-/* Row height - controlled by content */
+/* Row height - controlled by content and user preference */
 .table :deep(tbody tr) {
   /* Standard height, but can grow if needed */
   min-height: 48px;
   /* Remove any forced height */
+}
+
+/* Row height variants */
+.table.row-height-compact :deep(tbody tr) {
+  min-height: 40px;
+}
+
+.table.row-height-compact :deep(tbody td .cell) {
+  min-height: 32px;
+}
+
+.table.row-height-comfortable :deep(tbody tr) {
+  min-height: 60px;
+}
+
+.table.row-height-comfortable :deep(tbody td .cell) {
+  min-height: 48px;
+}
+
+.table.row-height-spacious :deep(tbody tr) {
+  min-height: 80px;
+}
+
+.table.row-height-spacious :deep(tbody td .cell) {
+  min-height: 64px;
 }
 
 .table :deep(tbody td) {

@@ -16,6 +16,7 @@ export interface LayoutOptions {
   showToolbar?: boolean;
   showSelect?: boolean;
   spacing?: 'compact' | 'cozy' | 'comfortable';
+  rowHeight?: 'compact' | 'comfortable' | 'spacious';
   widths?: Record<string, number>;
   align?: Record<string, 'left' | 'center' | 'right'>;
   customFieldNames?: Record<string, string>;

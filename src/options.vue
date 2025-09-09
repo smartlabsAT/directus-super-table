@@ -16,6 +16,21 @@
       label="Enable direct boolean field editing (single-click toggle without popover)"
     />
   </div>
+
+  <div class="field">
+    <label class="type-label">Row Height</label>
+    <v-select
+      v-model="rowHeight"
+      :items="[
+        { text: 'Compact (~40px)', value: 'compact' },
+        { text: 'Comfortable (~60px)', value: 'comfortable' },
+        { text: 'Spacious (~80px)', value: 'spacious' },
+      ]"
+      placeholder="Select row height"
+      item-title="text"
+      item-value="value"
+    />
+  </div>
 </template>
 
 <script lang="ts" setup>
@@ -28,6 +43,7 @@ interface LayoutOptions {
   editMode?: boolean;
   directBooleanToggle?: boolean;
   spacing?: 'compact' | 'cozy' | 'comfortable';
+  rowHeight?: 'compact' | 'comfortable' | 'spacious';
   quickFilters?: any[];
   customFieldNames?: Record<string, string>;
   widths?: Record<string, number>;
@@ -69,6 +85,16 @@ const directBooleanToggle = computed({
     layoutOptions.value = {
       ...layoutOptions.value,
       directBooleanToggle: val,
+    };
+  },
+});
+
+const rowHeight = computed({
+  get: () => layoutOptions.value?.rowHeight || 'comfortable',
+  set: (val) => {
+    layoutOptions.value = {
+      ...layoutOptions.value,
+      rowHeight: val,
     };
   },
 });
