@@ -105,10 +105,8 @@
     class="editable-cell relational"
     :style="{ textAlign: props.align || 'left' }"
   >
-    <!-- Manual Template Rendering - Production Fix -->
-    <span class="template-display">{{
-      renderTemplate(displayValue, field?.displayOptions?.template)
-    }}</span>
+    <!-- Direct Display Value (already rendered in computed) -->
+    <span class="template-display">{{ displayValue }}</span>
   </div>
 
   <!-- FALLBACK: Display only for relational fields without display templates -->
@@ -120,7 +118,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue';
+import { computed, onBeforeMount, markRaw, ref } from 'vue';
 import type { Field, Item } from '@directus/types';
 import InlineEditPopover from './InlineEditPopover.vue';
 import BooleanToggleCell from './CellRenderers/BooleanToggleCell.vue';
@@ -150,6 +148,21 @@ const emit = defineEmits<{
   'navigate-prev': [];
 }>();
 
+// PHASE 1: Initial data cache to prevent corruption during re-renders
+const stableDataCache = ref<Item | null>(null);
+
+onBeforeMount(() => {
+  // Capture clean data structure before any re-renders can corrupt it
+  if (props.item) {
+    try {
+      stableDataCache.value = markRaw(JSON.parse(JSON.stringify(props.item)));
+    } catch (error) {
+      console.warn('Failed to cache initial data:', error);
+      stableDataCache.value = null;
+    }
+  }
+});
+
 // Computed
 const primaryKeyField = computed(() => {
   return Object.keys(props.item).find((key) => key === 'id' || key.endsWith('_id')) || 'id';
@@ -172,6 +185,7 @@ const actualFieldKey = computed(() => {
 });
 
 const displayValue = computed(() => {
+
   // For edited values
   if (props.edits !== undefined) {
     return props.edits;
@@ -205,55 +219,57 @@ const displayValue = computed(() => {
     return null;
   }
 
+  // 🚨 CRITICAL FIX: Display template logic MUST come BEFORE getDisplayValue!
+  // SPECIAL HANDLING for relational fields with display templates
+  
+  const isRelatedValues = props.field?.display === 'related-values';
+  const isImage = props.field?.display === 'image';
+  const isFile = props.field?.display === 'file';
+  const isUser = props.field?.display === 'user';
+  
+
+  // Check if this is a relational field with display template that needs special handling
+  if (
+    props.field?.display &&
+    props.field.display !== null &&
+    (isRelatedValues || isImage || isFile || isUser)
+  ) {
+    
+    // For relational displays, we need to get the full object and render the template
+    const relationalValue = props.item[props.fieldKey];
+    
+    // Check if field has a custom template
+    const template = props.field?.displayOptions?.template || props.field?.meta?.display_options?.template;
+    
+    if (template && relationalValue) {
+      // 🚨 CRITICAL FIX: Check for data corruption (primitive value instead of object)
+      if (typeof relationalValue !== 'object' || relationalValue === null) {
+        console.warn('🚨 DATA CORRUPTION DETECTED: Expected object, got primitive:', relationalValue);
+        console.warn('🚨 Attempting to get stable object from cache...');
+        
+        // Try to get stable object from our cache
+        const stableObject = buildStableRelationalObject(props.fieldKey);
+        if (stableObject && typeof stableObject === 'object') {
+          return renderTemplate(stableObject, template);
+        }
+        
+        // Last resort: show corruption indicator
+        console.error('🚨 Cannot recover from data corruption - showing fallback');
+        return '—';
+      }
+      
+      return renderTemplate(relationalValue, template);
+    }
+    
+    // Fallback: if no template but is relational display, return the object itself
+    return relationalValue;
+  }
+
   // For other relational fields, use the aliased getter if provided
   if (props.getDisplayValue) {
     return props.getDisplayValue(props.item, props.fieldKey);
   }
 
-  // SPECIAL HANDLING for relational fields with display templates
-  // When a relational field has a display template, render-display expects the full object
-  // We check for known relational display types since field.special might not be available here
-  if (
-    props.field?.display &&
-    (props.field.display === 'related-values' ||
-      props.field.display === 'image' ||
-      props.field.display === 'file' ||
-      props.field.display === 'user')
-  ) {
-    const fieldValue = props.item[actualFieldKey.value];
-
-    // PRIORITY 1: Try to build object from dot-notation fields (these are always reliable)
-    const relatedObject: any = {};
-    let foundDotFields = false;
-
-    // Look for dot-notation fields in the item data first
-    Object.keys(props.item).forEach((key) => {
-      if (key.startsWith(`${actualFieldKey.value}.`)) {
-        const subField = key.substring(actualFieldKey.value.length + 1);
-        relatedObject[subField] = props.item[key];
-        foundDotFields = true;
-      }
-    });
-
-    // If we have the main field ID, add it
-    if (fieldValue != null) {
-      relatedObject.id = fieldValue;
-      foundDotFields = true;
-    }
-
-    // If we found dot-notation fields, return the constructed object
-    if (foundDotFields && Object.keys(relatedObject).length > 0) {
-      return relatedObject;
-    }
-
-    // FALLBACK 2: If it's already a full object, return it as-is
-    if (typeof fieldValue === 'object' && fieldValue !== null) {
-      return fieldValue;
-    }
-
-    // FALLBACK 3: Return the simple value (ID)
-    return fieldValue;
-  }
 
   // For normal fields with dot notation
   if (props.fieldKey.includes('.')) {
@@ -406,6 +422,92 @@ function renderTemplate(value: any, template: string): string {
 
   // Handle simple values - replace all template vars with the same value
   return template.replace(/\{\{.*?\}\}/g, String(value));
+}
+
+// DEFENSIVE PATTERN: Stable relational ID getter - bypasses Directus data corruption
+function getStableRelationalId(item: any, fieldKey: string): any {
+  try {
+    // PRIORITY: Try cached clean data first (before any corruption)
+    if (stableDataCache.value) {
+      const cachedId = stableDataCache.value[`${fieldKey}.id`];
+      if (cachedId !== undefined) {
+        return cachedId;
+      }
+      
+      const cachedField = stableDataCache.value[fieldKey];
+      if (typeof cachedField === 'number' || (typeof cachedField === 'string' && cachedField !== '')) {
+        return cachedField;
+      }
+    }
+
+    // FALLBACK: Use current item data with defensive patterns
+    const rawItem = JSON.parse(JSON.stringify(item));
+    
+    // PHASE 1: Always prefer dot notation for ID access (MOST STABLE)
+    const dotNotationId = rawItem[`${fieldKey}.id`];
+    if (dotNotationId !== undefined) {
+      return dotNotationId;
+    }
+    
+    // PHASE 2: Check if main field is object with ID
+    const fieldValue = rawItem[fieldKey];
+    if (typeof fieldValue === 'object' && fieldValue !== null && fieldValue.id !== undefined) {
+      return fieldValue.id;
+    }
+    
+    // PHASE 3: Return raw value if it's already an ID
+    if (typeof fieldValue === 'number' || (typeof fieldValue === 'string' && fieldValue !== '')) {
+      return fieldValue;
+    }
+    
+    return null;
+  } catch (error) {
+    console.warn('Stable ID extraction failed:', error);
+    return null;
+  }
+}
+
+// FINAL FIX: Direct access to relational data without relying on dot-notation
+function buildStableRelationalObject(fieldKey: string): any {
+  try {
+    
+    // STEP 1: Get the direct field value first
+    const directValue = props.item[fieldKey];
+    
+    // STEP 2: If we have a valid object, use it directly (this is our data!)
+    if (directValue && typeof directValue === 'object' && directValue !== null) {
+      return directValue;
+    }
+    
+    // STEP 3: Try cached data as fallback
+    if (stableDataCache.value && stableDataCache.value[fieldKey]) {
+      const cachedValue = stableDataCache.value[fieldKey];
+      
+      if (cachedValue && typeof cachedValue === 'object' && cachedValue !== null) {
+        return cachedValue;
+      }
+    }
+    
+    // STEP 4: Legacy dot-notation fallback (for compatibility)
+    const rawItem = JSON.parse(JSON.stringify(props.item));
+    const relatedObject: any = {};
+    
+    Object.keys(rawItem).forEach((key) => {
+      if (key.startsWith(`${fieldKey}.`)) {
+        const subField = key.substring(fieldKey.length + 1);
+        relatedObject[subField] = rawItem[key];
+      }
+    });
+    
+    if (Object.keys(relatedObject).length > 0) {
+      return relatedObject;
+    }
+
+    return null;
+  } catch (error) {
+    console.warn('🚨 Stable object building failed:', error);
+    return null;
+  }
 }
 
 function handleUpdate(value: any) {
