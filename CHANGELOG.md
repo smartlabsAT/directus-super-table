@@ -5,6 +5,14 @@ All notable changes to the Super Layout Table Extension will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.13] - 2025-09-10
+
+### Fixed
+- Updated GitHub Actions to latest versions (upload-artifact@v4, download-artifact@v4, codecov/codecov-action@v4)
+- Fixed workflow notification job logic to properly handle security audit warnings
+- Improved CI/CD pipeline stability and removed deprecated action warnings
+- Added proper token configuration for Codecov integration
+
 ## [0.2.12] - 2025-09-10
 
 ### Added
