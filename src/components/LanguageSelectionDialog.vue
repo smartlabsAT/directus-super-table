@@ -112,7 +112,6 @@ const dialogTitle = computed(() => {
   return `Manage Languages for "${props.fieldName}"`;
 });
 
-
 const availableLanguagesTitle = computed(() => {
   const mode = props.mode || 'add';
   return mode === 'add' ? 'Available Languages' : 'All Languages';
