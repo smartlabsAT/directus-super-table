@@ -261,6 +261,8 @@
       v-model:selected-languages="selectedLanguagesForField"
       :field-name="pendingTranslationField?.name || ''"
       :languages="languageItems"
+      :existing-languages="existingLanguagesForDialog"
+      :mode="languageDialogMode"
       @confirm="confirmLanguageSelection"
       @cancel="cancelLanguageSelection"
     />
@@ -374,6 +376,16 @@ const languageItems = computed(() => {
     text: lang.name,
     value: lang.code,
   }));
+});
+
+// Existing languages for the dialog (based on pending translation field)
+const existingLanguagesForDialog = computed(() => {
+  if (!pendingTranslationField.value || !detectExistingLanguagesForField) return [];
+
+  const baseField = getBaseFieldKey
+    ? getBaseFieldKey(pendingTranslationField.value.key)
+    : pendingTranslationField.value.key;
+  return detectExistingLanguagesForField(baseField);
 });
 
 // Check if collection has translation fields
@@ -1040,6 +1052,7 @@ const {
   showLanguageDialog,
   pendingTranslationField,
   selectedLanguagesForField,
+  languageDialogMode,
   renameField,
   resetToOriginal,
   confirmRename,
@@ -1047,13 +1060,17 @@ const {
   cancelLanguageSelection,
   confirmLanguageSelection,
   removeField,
+  // Language detection functions
+  detectExistingLanguagesForField,
+  getBaseFieldKey,
 } = useTableFields(
   fields as Ref<string[]>,
   ref(fieldsInCollection.value),
   collection,
   fieldsStore,
   relationsStore,
-  layoutOptions as any
+  layoutOptions as any,
+  languages
 );
 
 // Fetch languages when we have translation fields

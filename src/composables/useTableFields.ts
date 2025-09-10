@@ -1,5 +1,7 @@
 import { ref, Ref } from 'vue';
 import type { Field } from '@directus/types';
+import { useExistingLanguageDetection } from './useExistingLanguageDetection';
+import type { Language } from '../types/table.types';
 
 export function useTableFields(
   fields: Ref<string[]>,
@@ -7,7 +9,8 @@ export function useTableFields(
   collection: Ref<string>,
   fieldsStore: any,
   relationsStore: any,
-  layoutOptions: Ref<any>
+  layoutOptions: Ref<any>,
+  availableLanguages?: Ref<Language[]>
 ) {
   // Custom field names mapping - initialize from layoutOptions if available
   const customFieldNames = ref<Record<string, string>>(layoutOptions.value?.customFieldNames || {});
@@ -22,6 +25,12 @@ export function useTableFields(
   const showLanguageDialog = ref(false);
   const pendingTranslationField = ref<any>(null);
   const selectedLanguagesForField = ref<string[]>([]);
+  const languageDialogMode = ref<'add' | 'manage'>('add');
+
+  // Initialize language detection if available languages are provided
+  const languageDetection = availableLanguages
+    ? useExistingLanguageDetection(fields, availableLanguages)
+    : null;
 
   // Get display name for a field (custom or original)
   function getFieldName(fieldKey: string): string {
@@ -146,16 +155,27 @@ export function useTableFields(
   }
 
   // Language selection functions
-  function showLanguageSelectionForField(field: any) {
+  function showLanguageSelectionForField(field: any, mode: 'add' | 'manage' = 'add') {
     pendingTranslationField.value = field;
+    languageDialogMode.value = mode;
     selectedLanguagesForField.value = [];
     showLanguageDialog.value = true;
+  }
+
+  // Enhanced function for adding languages to existing translation fields
+  function addLanguagesToField(baseFieldKey: string) {
+    const field = {
+      key: baseFieldKey,
+      name: baseFieldKey.split('.').pop() || baseFieldKey,
+    };
+    showLanguageSelectionForField(field, 'add');
   }
 
   function cancelLanguageSelection() {
     showLanguageDialog.value = false;
     pendingTranslationField.value = null;
     selectedLanguagesForField.value = [];
+    languageDialogMode.value = 'add';
   }
 
   function confirmLanguageSelection() {
@@ -208,15 +228,19 @@ export function useTableFields(
     showLanguageDialog,
     pendingTranslationField,
     selectedLanguagesForField,
+    languageDialogMode,
     getFieldName,
     renameField,
     resetToOriginal,
     confirmRename,
     cancelRename,
     showLanguageSelectionForField,
+    addLanguagesToField,
     cancelLanguageSelection,
     confirmLanguageSelection,
     toggleField,
     removeField,
+    // Language detection functions (if available)
+    ...(languageDetection || {}),
   };
 }

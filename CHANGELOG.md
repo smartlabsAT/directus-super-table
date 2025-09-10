@@ -5,6 +5,33 @@ All notable changes to the Super Layout Table Extension will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.12] - 2025-09-10
+
+### Added
+- Enhanced Language Column Management (Issue #8)
+- Smart language detection and filtering for translation fields
+- LanguageSelectionDialog with "Currently Active" and "Available Languages" sections  
+- Visual status indicators for active languages with chip display
+- Mode-based dialog behavior ('add' vs 'manage' modes)
+- useExistingLanguageDetection composable for language field analysis
+
+### Changed
+- Language selection workflow now preserves column order and settings
+- Dialog shows only available (not yet added) languages to prevent duplicates
+- Enhanced addLanguagesToField function for existing translation fields
+- Improved language field management without disrupting table configuration
+
+### Fixed
+- Translation fields no longer require complete removal and re-addition to add languages
+- Column-specific settings (width, alignment, custom names) are preserved when adding languages
+- Language field detection now properly identifies existing language suffixes (e.g., 'translations.description:de-DE')
+
+### Technical Details
+- New composable: `src/composables/useExistingLanguageDetection.ts`
+- Enhanced: `src/components/LanguageSelectionDialog.vue` with smart filtering
+- Updated: `src/composables/useTableFields.ts` with language detection integration
+- Modified: `src/super-table.vue` for enhanced dialog props and mode handling
+
 ## [0.2.10] - 2025-08-30
 
 ### Fixed
