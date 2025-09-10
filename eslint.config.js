@@ -20,6 +20,7 @@ export default [
       'release/**',
       'node_modules/**',
       'playwright-tools/**',
+      'tests/**',
       '*.config.js',
       '*.config.ts',
       'index.js',
