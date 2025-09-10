@@ -4,8 +4,8 @@ import { useExistingLanguageDetection } from '@/composables/useExistingLanguageD
 import { mockLanguages } from '../../fixtures/mockData';
 
 describe('useExistingLanguageDetection', () => {
-  let currentFields: ReturnType<typeof ref>;
-  let availableLanguages: ReturnType<typeof ref>;
+  let currentFields: ReturnType<typeof ref<string[]>>;
+  let availableLanguages: ReturnType<typeof ref<any[]>>;
 
   beforeEach(() => {
     currentFields = ref([
@@ -237,7 +237,7 @@ describe('useExistingLanguageDetection', () => {
 
   describe('error handling and edge cases', () => {
     it('should handle empty current fields array', () => {
-      const emptyFields = ref([]);
+      const emptyFields = ref<string[]>([]);
       const { detectExistingLanguagesForField } = useExistingLanguageDetection(
         emptyFields,
         availableLanguages
@@ -247,7 +247,7 @@ describe('useExistingLanguageDetection', () => {
     });
 
     it('should handle empty available languages array', () => {
-      const emptyLanguages = ref([]);
+      const emptyLanguages = ref<any[]>([]);
       const { getAvailableLanguagesForField } = useExistingLanguageDetection(
         currentFields,
         emptyLanguages
@@ -265,7 +265,7 @@ describe('useExistingLanguageDetection', () => {
         largeFieldArray.push(`translations.field_${i}:de-DE`);
       }
       
-      const largeFields = ref(largeFieldArray);
+      const largeFields = ref<string[]>(largeFieldArray);
       const { detectExistingLanguagesForField } = useExistingLanguageDetection(
         largeFields,
         availableLanguages

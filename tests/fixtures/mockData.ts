@@ -61,7 +61,7 @@ export const mockApiResponse = {
 };
 
 export const mockFieldsStore = {
-  getField: vi.fn((collection: string, fieldKey: string) => {
+  getField: vi.fn((fieldKey: string) => {
     return mockFields.find((f) => f.field === fieldKey);
   }),
   getFieldsForCollection: vi.fn(() => mockFields),
