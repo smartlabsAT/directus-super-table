@@ -44,7 +44,7 @@ jobs:
         run: pnpm run format:check
         
       - name: Run tests
-        run: pnpm test -- --run --reporter=verbose --coverage
+        run: pnpm test -- --run --reporter=verbose
         
       - name: Test summary
         run: |

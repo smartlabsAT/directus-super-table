@@ -35,7 +35,7 @@ jobs:
         run: pnpm run quality
       
       - name: Run tests
-        run: pnpm test -- --run --coverage
+        run: pnpm test -- --run
       
       - name: Build extension
         run: pnpm run build
