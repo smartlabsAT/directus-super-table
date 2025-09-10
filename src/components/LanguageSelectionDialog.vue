@@ -7,10 +7,6 @@
     <v-card>
       <v-card-title>{{ dialogTitle }}</v-card-title>
       <v-card-text>
-        <p style="margin-bottom: 16px">
-          {{ dialogDescription }}
-        </p>
-
         <!-- Currently Active Languages Section -->
         <div v-if="existingLanguages && existingLanguages.length > 0" style="margin-bottom: 20px">
           <h4 style="margin-bottom: 12px; color: var(--foreground-subdued); font-size: 14px">
@@ -116,13 +112,6 @@ const dialogTitle = computed(() => {
   return `Manage Languages for "${props.fieldName}"`;
 });
 
-const dialogDescription = computed(() => {
-  const mode = props.mode || 'add';
-  if (mode === 'add') {
-    return `Select additional languages to display for "${props.fieldName}"`;
-  }
-  return `Select which languages to display for "${props.fieldName}"`;
-});
 
 const availableLanguagesTitle = computed(() => {
   const mode = props.mode || 'add';
