@@ -1,5 +1,8 @@
 # Super Layout Table Extension for Directus
 
+![Version](https://img.shields.io/github/v/release/smartlabsAT/directus-super-table)
+![License](https://img.shields.io/badge/license-MIT-green)
+![npm downloads](https://img.shields.io/npm/dt/directus-extension-super-table)
 ![Quality Checks](https://github.com/smartlabsAT/directus-super-table/workflows/Quality%20Checks/badge.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue)
 ![ESLint](https://img.shields.io/badge/ESLint-0%20errors-brightgreen)
