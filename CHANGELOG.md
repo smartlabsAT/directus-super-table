@@ -5,6 +5,28 @@ All notable changes to the Super Layout Table Extension will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v0.7.0 — Open rows in a new tab (Ctrl/Cmd+click)
+
+Implements #72. Table rows can be opened in a new browser tab, matching the
+"open in new tab" behavior users expect from links.
+
+### Added
+- **Ctrl/Cmd+click opens the row in a new tab.** Ctrl+click (Windows/Linux) or
+  Cmd+click (macOS) on a row opens its detail page in a new tab; a normal
+  left-click keeps the existing behavior (navigate in the same tab, or edit when
+  edit mode is on). Because `v-table` only emits `click:row` while `clickable`
+  (which the layout disables in edit mode), modifier-clicks are intercepted in the
+  capture phase and stopped before the cell editor or in-tab navigation react — so
+  it works in both normal and edit mode without opening the inline editor.
+
+### Internal
+- Detail-route construction is shared via `getItemRoute` / `getItemRouteOrWarn`
+  (a consistent "missing primary key" warning for both the row-click and
+  modifier-click paths). The new tab opens with `noopener,noreferrer`, and the
+  primary key is URL-encoded. `vue-tsc`, ESLint and Prettier green; verified live
+  (edit mode on) that Ctrl/Cmd+click opens the correct row id in a new tab while a
+  plain click still opens the inline editor.
+
 ## v0.6.2 — Unified deep-build, lifecycle consolidation & bare-translation display
 
 Follow-up to v0.6.1 (#70). Consolidates the `super-table.vue` orchestrator and

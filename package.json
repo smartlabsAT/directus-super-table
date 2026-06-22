@@ -1,6 +1,6 @@
 {
   "name": "directus-extension-super-table",
-  "version": "0.6.2",
+  "version": "0.7.0",
   "description": "A powerful and feature-rich table layout extension for Directus 11+ with inline editing, quick filters, and manual sorting",
   "icon": "table_rows",
   "keywords": [
