@@ -1,6 +1,6 @@
 <!-- super-layout-table with full relational field support and filter presets -->
 <template>
-  <div class="super-layout-table">
+  <div class="super-layout-table" @click.capture="openRowInNewTabOnModifier">
     <!-- Top Bar with Search and Filters -->
     <div class="table-toolbar" v-if="showToolbar">
       <div class="toolbar-content">
@@ -1153,21 +1153,30 @@ function toPage(newPage: number) {
   page.value = newPage;
 }
 
-function editItem(item: Item) {
+function getItemRoute(item: Item): string | null {
   // Get the primary key field name directly (no .value needed as per Directus pattern)
   const pkField = getPrimaryKeyFieldName();
   const primaryKey = item[pkField];
+  if (!primaryKey) return null;
+  return `/content/${collection.value}/${encodeURIComponent(String(primaryKey))}`;
+}
 
-  if (!primaryKey) {
+// Resolve the detail route, or surface a warning when the primary key is missing
+function getItemRouteOrWarn(item: Item): string | null {
+  const route = getItemRoute(item);
+  if (!route) {
     notificationsStore.add({
       type: 'warning',
       title: 'Navigation Error',
       text: `Could not find primary key in item`,
     });
-    return;
   }
+  return route;
+}
 
-  router.push(`/content/${collection.value}/${primaryKey}`);
+function editItem(item: Item) {
+  const route = getItemRouteOrWarn(item);
+  if (route) router.push(route);
 }
 
 // Helper function to move item in array (exact Directus implementation)
@@ -1258,6 +1267,32 @@ function handleTableRowClick({ item, event }: { item: Item; event: MouseEvent })
 
   // Navigate to detail page
   editItem(item);
+}
+
+// v-table suppresses click:row in edit mode; intercept modifier-clicks in the capture phase to open a new tab in both modes
+function openRowInNewTabOnModifier(event: MouseEvent) {
+  if (!event.ctrlKey && !event.metaKey) return;
+  const target = event.target as HTMLElement | null;
+  if (
+    !target ||
+    target.closest('button') ||
+    target.closest('.v-checkbox') ||
+    target.closest('input') ||
+    target.closest('textarea') ||
+    target.closest('.v-select')
+  ) {
+    return;
+  }
+  const row = target.closest('tbody tr');
+  const tbody = row?.parentElement;
+  if (!row || !tbody) return;
+  const item = items.value[Array.from(tbody.children).indexOf(row)];
+  if (!item) return;
+  const route = getItemRouteOrWarn(item);
+  if (!route) return;
+  window.open(router.resolve(route).href, '_blank', 'noopener,noreferrer');
+  event.preventDefault();
+  event.stopPropagation();
 }
 
 // Watch for search changes
