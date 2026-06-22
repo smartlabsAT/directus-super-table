@@ -5,7 +5,7 @@ All notable changes to the Super Layout Table Extension will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v0.7.0 — Open rows in a new tab (Ctrl/Cmd+click)
+## v0.6.3 — Open rows in a new tab (Ctrl/Cmd+click)
 
 Implements #72. Table rows can be opened in a new browser tab, matching the
 "open in new tab" behavior users expect from links.
