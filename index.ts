@@ -4,6 +4,7 @@ import { formatTitle } from '@directus/format-title';
 import LayoutComponent from './src/super-table.vue';
 import ActionsComponent from './src/actions.vue';
 import OptionsComponent from './src/options.vue';
+import { requestCollectionRefresh } from './src/utils/requestCollectionRefresh';
 
 // Workaround: TS 6.0.2 crashes on complex SDK v17 types in defineLayout() inline objects.
 // Extract config to bypass the compiler crash (same fix as expandable-blocks).
@@ -46,6 +47,7 @@ const layoutConfig = {
       ...props,
       emit,
       availableFieldChoices,
+      refresh: () => requestCollectionRefresh(props.collection),
     };
   },
 } as any;
